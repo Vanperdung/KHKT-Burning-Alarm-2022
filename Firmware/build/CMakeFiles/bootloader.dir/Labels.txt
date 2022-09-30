@@ -1,0 +1,13 @@
+# Target labels
+ bootloader
+# Source files and their labels
+D:/KHKT/Firmware/build/CMakeFiles/bootloader
+D:/KHKT/Firmware/build/CMakeFiles/bootloader.rule
+D:/KHKT/Firmware/build/CMakeFiles/bootloader-complete.rule
+D:/KHKT/Firmware/build/bootloader-prefix/src/bootloader-stamp/bootloader-install.rule
+D:/KHKT/Firmware/build/bootloader-prefix/src/bootloader-stamp/bootloader-mkdir.rule
+D:/KHKT/Firmware/build/bootloader-prefix/src/bootloader-stamp/bootloader-download.rule
+D:/KHKT/Firmware/build/bootloader-prefix/src/bootloader-stamp/bootloader-update.rule
+D:/KHKT/Firmware/build/bootloader-prefix/src/bootloader-stamp/bootloader-patch.rule
+D:/KHKT/Firmware/build/bootloader-prefix/src/bootloader-stamp/bootloader-configure.rule
+D:/KHKT/Firmware/build/bootloader-prefix/src/bootloader-stamp/bootloader-build.rule
