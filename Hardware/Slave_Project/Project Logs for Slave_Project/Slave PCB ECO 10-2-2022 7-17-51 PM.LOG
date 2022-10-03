@@ -1,0 +1,52 @@
+Removed Pin From Net: NetName=VCC Pin=C7-1
+Removed Pin From Net: NetName=GND Pin=C7-2
+Removed Pin From Net: NetName=VCC Pin=C8-1
+Removed Pin From Net: NetName=GND Pin=C8-2
+Removed Pin From Net: NetName=+3.3V Pin=C9-1
+Removed Pin From Net: NetName=GND Pin=C9-2
+Removed Pin From Net: NetName=+3.3V Pin=C10-1
+Removed Pin From Net: NetName=GND Pin=C10-2
+Removed Pin From Net: NetName=+3.3V Pin=D7-2
+Removed Pin From Net: NetName=MQ7_EXTI Pin=JP1-3
+Removed Pin From Net: NetName=MQ7_ADC Pin=JP1-4
+Removed Pin From Net: NetName=GND Pin=LED5-2
+Removed Pin From Net: NetName=GND Pin=Q4-2
+Removed Pin From Net: NetName=+3.3V Pin=R12-2
+Removed Pin From Net: NetName=+3.3V Pin=R14-1
+Removed Pin From Net: NetName=MQ7_ADC Pin=R14-2
+Removed Pin From Net: NetName=+3.3V Pin=RL5-5
+Removed Member From Class: ClassName=Slave Member=C14
+Removed Member From Class: ClassName=Slave Member=C15
+Removed Member From Class: ClassName=Slave Member=C16
+Removed Member From Class: ClassName=Slave Member=C17
+Removed Member From Class: ClassName=Slave Member=D7
+Removed Member From Class: ClassName=Slave Member=J6
+Removed Member From Class: ClassName=Slave Member=LED5
+Removed Member From Class: ClassName=Slave Member=Q4
+Removed Member From Class: ClassName=Slave Member=R17
+Removed Member From Class: ClassName=Slave Member=R18
+Removed Member From Class: ClassName=Slave Member=RL5
+Change Component Designator: OldDesignator=C11 NewDesignator=C7
+Change Component Designator: OldDesignator=C12 NewDesignator=C8
+Change Component Designator: OldDesignator=C13 NewDesignator=C9
+Change Component Designator: OldDesignator=C14 NewDesignator=C10
+Change Component Designator: OldDesignator=C15 NewDesignator=C11
+Change Component Designator: OldDesignator=C16 NewDesignator=C12
+Change Component Designator: OldDesignator=C17 NewDesignator=C13
+Change Component Designator: OldDesignator=J6 NewDesignator=J5
+Change Component Designator: OldDesignator=R9 NewDesignator=R8
+Change Component Designator: OldDesignator=R11 NewDesignator=R9
+Change Component Designator: OldDesignator=R12 NewDesignator=R10
+Change Component Designator: OldDesignator=R14 NewDesignator=R11
+Change Component Designator: OldDesignator=R15 NewDesignator=R12
+Change Component Designator: OldDesignator=R16 NewDesignator=R14
+Change Component Designator: OldDesignator=R17 NewDesignator=R15
+Change Component Designator: OldDesignator=R18 NewDesignator=R16
+Added Pin To Net: NetName=MQ7_ADC Pin=R11-1
+Change Net Name : Old Net Name=NetR18_2 New Net Name=NetR16_2
+Added Pin To Net: NetName=NetJP1_3 Pin=JP1-3
+Added Pin To Net: NetName=NetJP1_3 Pin=R10-2
+Added Net: Name=NetJP1_3
+Added Pin To Net: NetName=NetJP1_4 Pin=JP1-4
+Added Pin To Net: NetName=NetJP1_4 Pin=R11-2
+Added Net: Name=NetJP1_4

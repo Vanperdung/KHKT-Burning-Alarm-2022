@@ -1,0 +1,14 @@
+Removed Pin From Net: NetName=VCC Pin=RL1-1
+Added Component: Designator=SW1(SW2)
+Add component (AddParameter): Name = "Value"; Value = "SW chip 2 pin"; VariantName = "[No Variations]"
+Added Pin To Net: NetName=VCC Pin=SW1-2
+Added Pin To Net: NetName=NetRL1_1 Pin=RL1-1
+Added Pin To Net: NetName=NetRL1_1 Pin=SW1-1
+Added Net: Name=NetRL1_1
+Added Member To Class: ClassName=Master Member=Component C15 100nF
+Added Member To Class: ClassName=Master Member=Component C16 100nF
+Added Member To Class: ClassName=Master Member=Component C18 100nF
+Added Member To Class: ClassName=Master Member=Component R14 470R
+Added Member To Class: ClassName=Master Member=Component R15 10k
+Added Member To Class: ClassName=Master Member=Component R18 10k
+Added Member To Class: ClassName=Master Member=Component SW1 SW

@@ -1,0 +1,25 @@
+Added Component: Designator=U1(SIM800C)
+Added Pin To Net: NetName=NetR4_2 Pin=U1-1
+Added Pin To Net: NetName=NetR2_2 Pin=U1-2
+Added Pin To Net: NetName=GND Pin=U1-8
+Added Pin To Net: NetName=GND Pin=U1-13
+Added Pin To Net: NetName=SIM_DATA Pin=U1-15
+Added Pin To Net: NetName=SIM_CLK Pin=U1-16
+Added Pin To Net: NetName=SIM_RST Pin=U1-17
+Added Pin To Net: NetName=SIM_VDD Pin=U1-18
+Added Pin To Net: NetName=GND Pin=U1-19
+Added Pin To Net: NetName=GND Pin=U1-21
+Added Pin To Net: NetName=GND Pin=U1-27
+Added Pin To Net: NetName=NetC1_1 Pin=U1-28
+Added Pin To Net: NetName=GND Pin=U1-30
+Added Pin To Net: NetName=GND Pin=U1-31
+Added Pin To Net: NetName=NetR5_1 Pin=U1-32
+Added Pin To Net: NetName=GND Pin=U1-33
+Added Pin To Net: NetName=VCC Pin=U1-34
+Added Pin To Net: NetName=VCC Pin=U1-35
+Added Pin To Net: NetName=GND Pin=U1-36
+Added Pin To Net: NetName=GND Pin=U1-37
+Added Pin To Net: NetName=SIM_PWRKEY Pin=U1-39
+Added Pin To Net: NetName=SIM_NETLIGHT Pin=U1-41
+Added Pin To Net: NetName=SIM_STATUS Pin=U1-42
+Added Member To Class: ClassName=Master Member=Component U1 SIM800C
