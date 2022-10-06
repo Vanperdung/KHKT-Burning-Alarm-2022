@@ -1,13 +1,15 @@
-/.vscode/settings.json
-/build
+*.vscode/
+*build/
 sdkconfig
 sdkconfig.old
+*Document/
 *.OutJob
 *Project Logs for Master_Project/
 *Project Logs for Slave_Project/
 *History/
 *.SchDocPreview
 *.rar
+*.zip
+*.pdf
 *Project Outputs for Master_Project/
 *Project Outputs for Slave_Project/
-*.htm
