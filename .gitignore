@@ -3,9 +3,11 @@
 sdkconfig
 sdkconfig.old
 *.OutJob
-*Project Logs for MPPT/
+*Project Logs for Master_Project/
+*Project Logs for Slave_Project/
 *History/
 *.SchDocPreview
 *.rar
-*Project Outputs for MPPT/
+*Project Outputs for Master_Project/
+*Project Outputs for Slave_Project/
 *.htm
