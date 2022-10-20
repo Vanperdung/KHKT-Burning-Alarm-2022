@@ -116,7 +116,7 @@ void lora_tx_mode(void)
     lora_write_reg(REG_OP_MODE, MODE_LONG_RANGE_MODE | MODE_TX);
 }
 
-void lora_set_tx_power(uint8_t level)
+void lora_set_tx_power(int8_t level)
 {
     if(level < 0)
         level = 0;

@@ -68,7 +68,7 @@ static void smartconfig_event_handler(void* event_handler_arg, esp_event_base_t 
         wifi_config_t wifi_config;
         uint8_t ssid[33] = {0};
         uint8_t password[65] = {0};
-
+        uint8_t rvd_data[33] = {0};
         bzero(&wifi_config, sizeof(wifi_config_t));
         memcpy(wifi_config.sta.ssid, evt->ssid, sizeof(wifi_config.sta.ssid));
         memcpy(wifi_config.sta.password, evt->password, sizeof(wifi_config.sta.password));
@@ -82,6 +82,16 @@ static void smartconfig_event_handler(void* event_handler_arg, esp_event_base_t 
         memcpy(password, evt->password, sizeof(evt->password));
         ESP_LOGI(TAG, "SSID:%s", ssid);
         ESP_LOGI(TAG, "PASSWORD:%s", password);
+        if(evt->type == SC_TYPE_ESPTOUCH_V2) 
+        {
+			ESP_ERROR_CHECK(esp_smartconfig_get_rvd_data(rvd_data, sizeof(rvd_data)));
+			ESP_LOGI(TAG, "RVD_DATA:");
+			for (int i=0; i<33; i++) 
+            {
+				printf("%02x ", rvd_data[i]);
+			}
+			printf("\n");
+		}
 
         ESP_ERROR_CHECK(esp_wifi_disconnect());
         ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
@@ -105,14 +115,14 @@ static void smartconfig_task(void *param)
         uxBits = xEventGroupWaitBits(smartconfig_event_group, CONNECTED_BIT | ESPTOUCH_DONE_BIT, true, false, portMAX_DELAY); 
         if(uxBits & CONNECTED_BIT) 
         {
-            ESP_LOGI(TAG, "WiFi connected to ap");
+            ESP_LOGI(TAG, "WiFi connected to AP");
             status = NORMAL_MODE;
         }
         if(uxBits & ESPTOUCH_DONE_BIT) 
         {
             ESP_LOGI(TAG, "Smartconfig over");
             esp_smartconfig_stop();
-            esp_restart();
+            // esp_restart();
             vTaskDelete(NULL);
         }
     }
@@ -120,11 +130,11 @@ static void smartconfig_task(void *param)
 
 void smartconfig_init(void)
 {
-    ESP_ERROR_CHECK(esp_wifi_stop());
     smartconfig_event_group = xEventGroupCreate();
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &smartconfig_event_handler, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &smartconfig_event_handler, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(SC_EVENT, ESP_EVENT_ANY_ID, &smartconfig_event_handler, NULL));
+    ESP_ERROR_CHECK(esp_wifi_stop());
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_start());
 }

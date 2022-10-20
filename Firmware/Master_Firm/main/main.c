@@ -8,7 +8,6 @@
 #include "freertos/queue.h"
 #include "freertos/ringbuf.h"
 
-
 #include "esp_system.h"
 #include "esp_event.h"
 #include "esp_log.h"
@@ -43,8 +42,12 @@
 #include "main.h"
 
 static const char *TAG = "MAIN";
-RTC_NOINIT_ATTR bool smartconfig_flag;
+RTC_NOINIT_ATTR int smartconfig_flag;
+RTC_NOINIT_ATTR int alarm_flag;
 _status status;    
+uint8_t topic_sensor[100] = {0};
+uint8_t topic_fota[100] = {0};
+uint8_t topic_process[100] = {0};
 
 void app_main(void)
 {
@@ -52,12 +55,15 @@ void app_main(void)
     status = LOCAL_MODE;
     led_status_init();
     led_onoff_init();
+    sim_init();
+    wifi_init();
     xTaskCreate(&led_status_task, "led_status_task", 2048, NULL, 5, NULL);
     xTaskCreate(&led_onoff_task, "led_onoff_task", 2048, NULL, 5, NULL);
-    wifi_init();
-    if(smartconfig_flag == true)
+    xTaskCreate(&button_task, "button_task", 2048, NULL, 10, NULL);
+    xTaskCreate(&sim_task, "sim_task", 2048, NULL, 10, NULL);
+    if(smartconfig_flag == ENABLE_SC)
     {
-        smartconfig_flag = false;
+        smartconfig_flag = DISABLE_SC;
         status = SMARTCONFIG;
         smartconfig_init();
     }
@@ -65,7 +71,11 @@ void app_main(void)
     {
         wifi_config_t wifi_cfg = {
             .sta = {
-                .threshold.authmode = WIFI_AUTH_WPA2_PSK
+                .threshold.authmode = WIFI_AUTH_WPA2_PSK,
+                .pmf_cfg = {
+					.capable = true,
+					.required = false
+				}
             }
         };
         if(esp_wifi_get_config(ESP_IF_WIFI_STA, &wifi_cfg) == ESP_OK)
@@ -74,12 +84,7 @@ void app_main(void)
             ESP_LOGI(TAG, "%s" ,wifi_cfg.sta.ssid);
             ESP_LOGI(TAG, "%s" ,wifi_cfg.sta.password);
             wifi_sta(wifi_cfg, WIFI_MODE_STA);
-            while(1)
-            {
-                vTaskDelay(1000 / portTICK_RATE_MS);
-            }
-            while(!(status == NORMAL_MODE));
-            // mqtt_client_sta();
+            mqtt_client_sta();
         }
     }
     vTaskSuspend(NULL);

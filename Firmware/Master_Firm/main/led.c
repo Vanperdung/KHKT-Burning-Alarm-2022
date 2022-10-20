@@ -33,7 +33,8 @@ void led_status_init(void)
         .intr_type = GPIO_INTR_DISABLE,
         .mode = GPIO_MODE_OUTPUT,
         .pull_down_en = 0,
-        .pull_up_en = 0
+        .pull_up_en = 0, 
+        .pin_bit_mask = (1ULL << LED_STATUS_PIN)
     };
     gpio_config(&led_status_cfg);
     gpio_set_level(LED_STATUS_PIN, LED_OFF);
@@ -46,7 +47,8 @@ void led_onoff_init(void)
         .intr_type = GPIO_INTR_DISABLE,
         .mode = GPIO_MODE_OUTPUT,
         .pull_down_en = 0,
-        .pull_up_en = 0
+        .pull_up_en = 0,
+        .pin_bit_mask = (1ULL << LED_ONOFF_PIN)
     };
     gpio_config(&led_onoff_cfg);
     gpio_set_level(LED_ONOFF_PIN, LED_OFF);
