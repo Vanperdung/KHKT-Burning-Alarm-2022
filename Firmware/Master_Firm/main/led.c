@@ -57,14 +57,34 @@ void led_onoff_init(void)
 
 void led_onoff_task(void *param)
 {
+    led_onoff_init();
     while(1)
     {
-        vTaskDelay(1000 / portTICK_RATE_MS);
+        switch(status)
+        {
+            case SMARTCONFIG:
+                gpio_set_level(LED_ONOFF_PIN, LED_ON);
+                vTaskDelay(100 / portTICK_RATE_MS);
+                gpio_set_level(LED_ONOFF_PIN, LED_OFF);
+                vTaskDelay(100 / portTICK_RATE_MS);
+                break;
+            case FOTA:
+                gpio_set_level(LED_ONOFF_PIN, LED_ON);
+                vTaskDelay(1000 / portTICK_RATE_MS);
+                gpio_set_level(LED_ONOFF_PIN, LED_OFF);
+                vTaskDelay(1000 / portTICK_PERIOD_MS);
+                break;
+            default:
+                gpio_set_level(LED_ONOFF_PIN, LED_OFF);
+                vTaskDelay(100 / portTICK_PERIOD_MS);
+                break;
+        }
     }
 }
 
 void led_status_task(void *param)
 {
+    led_status_init();
     while(1)
     {
         switch(status)
@@ -77,19 +97,8 @@ void led_status_task(void *param)
                 gpio_set_level(LED_STATUS_PIN, LED_ON);
                 vTaskDelay(100 / portTICK_RATE_MS);
                 break;
-            case SMARTCONFIG:
-                gpio_set_level(LED_STATUS_PIN, LED_ON);
-                vTaskDelay(1000 / portTICK_RATE_MS);
-                gpio_set_level(LED_STATUS_PIN, LED_OFF);
-                vTaskDelay(1000 / portTICK_RATE_MS);
-                break;
-            case FOTA:
-                gpio_set_level(LED_STATUS_PIN, LED_ON);
-                vTaskDelay(200 / portTICK_RATE_MS);
-                gpio_set_level(LED_STATUS_PIN, LED_OFF);
-                vTaskDelay(200 / portTICK_PERIOD_MS);
-                break;
             default:
+                gpio_set_level(LED_STATUS_PIN, LED_OFF);
                 vTaskDelay(100 / portTICK_RATE_MS);
                 break;  
         }

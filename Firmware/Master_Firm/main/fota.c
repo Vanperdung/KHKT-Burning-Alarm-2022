@@ -45,6 +45,11 @@ static const char *TAG = "FOTA";
 extern _status status; 
 extern const uint8_t github_cert_pem_start[] asm("_binary_git_ota_pem_start");
 extern const uint8_t github_cert_pem_end[] asm("_binary_git_ota_pem_end");
+extern esp_mqtt_client_handle_t client;  
+extern uint8_t topic_sensor[100];
+extern uint8_t topic_fota[100];
+extern uint8_t topic_process[100];
+extern uint8_t topic_number[100];
 
 esp_err_t ota_event_handler(esp_http_client_event_t *evt)
 {
@@ -91,6 +96,8 @@ void fota_task(void *param)
     if(ret == ESP_OK) 
     {
         ESP_LOGI(TAG, "OTA done, restarting...");
+        esp_mqtt_client_publish(client, (char*)topic_process, "{\"process\":\"Fota done\"}", strlen("{\"process\":\"Fota done\"}"), 0, 0);
+        vTaskDelay(1000 / portTICK_RATE_MS);
         esp_restart();
     } 
     else 

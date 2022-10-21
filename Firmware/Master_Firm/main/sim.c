@@ -31,9 +31,9 @@
 #include "smartconfig.h"
 #include "wifi.h"
 #include "main.h"
+#include "spiffs_user.h"
 
 static const char *TAG = "SIM";
-
 static void uart_init(void)
 {
     uart_config_t uart_cfg = {
@@ -86,7 +86,7 @@ static bool read_sim_response(char *sim_mess_rx, char *check_response, int time_
         vTaskDelay(10 / portTICK_RATE_MS);
     }
     uart_read_bytes(UART_NUM_2, sim_mess_rx, cur_len, 20 / portTICK_RATE_MS);
-    // ESP_LOGI(TAG, "Sim response: %s", sim_mess_rx);
+    ESP_LOGI(TAG, "Sim response: %s", sim_mess_rx);
     if(check_response)
     {
         if(strstr(sim_mess_rx, check_response) != NULL)
@@ -103,8 +103,6 @@ esp_err_t sim_init(void)
     // char sim_mess_tx[100] = {0};
     char sim_mess_rx[100] = {0};
     ESP_LOGI(TAG, "Sim init");
-    uart_init();
-    gpio_sim_init();
     while(!gpio_get_level(SIM_STATUS_PIN))
     {
         gpio_set_level(SIM_PWRKEY_PIN, 1);
@@ -127,7 +125,14 @@ esp_err_t sim_init(void)
     }
 
     uart_write_bytes(UART_NUM_2, "AT+CPIN?\r\n", strlen("AT+CPIN?\r\n"));
-    if(!read_sim_response(sim_mess_rx, "OK", 1000))
+    if(!read_sim_response(sim_mess_rx, "OK", 100))
+    {
+        ESP_LOGI(TAG, "Sim got error");
+        return ESP_FAIL;
+    }
+
+    uart_write_bytes(UART_NUM_2, "AT+COPS?\r\n", strlen("AT+COPS?\r\n"));
+    if(!read_sim_response(sim_mess_rx, "OK", 100))
     {
         ESP_LOGI(TAG, "Sim got error");
         return ESP_FAIL;
@@ -135,21 +140,64 @@ esp_err_t sim_init(void)
     return ESP_OK;
 }
 
-static void send_message(void)
+esp_err_t send_message(char *sim_mess, char *number)
 {
-    
+    char end_mess[2] = {0x1a, 0x00};
+    char at_send_mess[100] = {0};
+    char sim_mess_rx[100] = {0};
+    sprintf(at_send_mess, "AT+CMGS=\"%s\"\r\n", number);
+
+    uart_write_bytes(UART_NUM_2, "AT+CMGF=1\r\n\r\n", strlen("AT+CMGF=1\r\n"));
+    if(!read_sim_response(sim_mess_rx, "OK", 2000))
+    {
+        ESP_LOGI(TAG, "Sim got error");
+        return ESP_FAIL;
+    }
+
+    uart_write_bytes(UART_NUM_2, at_send_mess, strlen(at_send_mess));
+    if(!read_sim_response(sim_mess_rx, ">", 200))
+    {
+        ESP_LOGI(TAG, "Sim got error");
+        return ESP_FAIL;
+    }
+
+    uart_write_bytes(UART_NUM_2, sim_mess, strlen(sim_mess));
+    if(!read_sim_response(sim_mess_rx, NULL, 200))
+    {
+        ESP_LOGI(TAG, "Sim got error");
+        return ESP_FAIL;
+    }
+
+    uart_write_bytes(UART_NUM_2, end_mess, strlen(end_mess));
+    if(!read_sim_response(sim_mess_rx, NULL, 200))
+    {
+        ESP_LOGI(TAG, "Sim got error");
+        return ESP_FAIL;
+    }
+    return ESP_OK;
 }
 
-void sim_task(void)
+void sim_task(void *param)
 {
     esp_err_t ret;
+    char number[20] = {0};
+    uart_init();
+    gpio_sim_init();
     do
     {
         ret = sim_init();
     } while(ret != ESP_OK);
     ESP_LOGI(TAG, "Sim init done");
+    vTaskDelay(2000 / portTICK_RATE_MS);
     while(1)
     {
-
+        // read_from_file("number.txt", number);
+        // if(strlen(number) > 5)
+        // {
+        //     send_message("CHAY NHE NAY :)", number);
+        //     vTaskSuspend(NULL);
+        // }
+        // else
+            vTaskDelay(1000 / portTICK_RATE_MS);
     }
 }

@@ -40,12 +40,15 @@
 #include "smartconfig.h"
 #include "wifi.h"
 #include "main.h"
+#include "spiffs_user.h"
 
 static const char *TAG = "MQTT";
 extern uint8_t topic_sensor[100];
 extern uint8_t topic_fota[100];
 extern uint8_t topic_process[100];
+extern uint8_t topic_number[100];
 RingbufHandle_t mqtt_ring_buf;
+esp_mqtt_client_handle_t client;  
 
 static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
 {
@@ -57,7 +60,7 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
         case MQTT_EVENT_CONNECTED:
             ESP_LOGI(TAG, "MQTT event connected");
             esp_mqtt_client_subscribe(client, (char*)topic_fota, 0);
-            esp_mqtt_client_subscribe(client, (char*)topic_process, 0);
+            esp_mqtt_client_subscribe(client, (char*)topic_number, 0);
             break;
         case MQTT_EVENT_DISCONNECTED:
             ESP_LOGI(TAG, "MQTT event disconnected");
@@ -96,8 +99,12 @@ static void process_message_json(char *mess, _message_object *mess_obj)
         if(current_obj->string)
         {
             const char *str = current_obj->string;
+            if(strcmp(str, "action") == 0)
+                memcpy(mess_obj->action, current_obj->valuestring, strlen(current_obj->valuestring) + 1);
             if(strcmp(str, "url") == 0)
                 memcpy(mess_obj->url, current_obj->valuestring, strlen(current_obj->valuestring) + 1);
+            if(strcmp(str, "number") == 0)
+                memcpy(mess_obj->number, current_obj->valuestring, strlen(current_obj->valuestring) + 1);
         }
     }
     cJSON_Delete(root);
@@ -118,10 +125,23 @@ static void mqtt_task(void *param)
                 ESP_LOGI(TAG, "Payload: %s", mess_recv);
                 memset(&mess_obj, 0, sizeof(mess_obj));
                 process_message_json(mess_recv, &mess_obj);
-                if(strlen(mess_obj.url) < 10)
-                    ESP_LOGI(TAG, "URL fota not correct");
-                else
-                    xTaskCreate(&fota_task, "fota_task", 8192, mess_obj.url, 15, NULL);
+                if(strcmp(mess_obj.action, "fota_device") == 0)
+                {
+                    if(strlen(mess_obj.url) < 10)
+                        ESP_LOGE(TAG, "URL fota not correct");
+                    else
+                        xTaskCreate(&fota_task, "fota_task", 8192, mess_obj.url, 15, NULL);
+                }
+                if(strcmp(mess_obj.action, "update_number") == 0)
+                {
+                    if(strlen(mess_obj.number) < 5)
+                        ESP_LOGE(TAG, "Number not correct");
+                    else
+                    {
+                        ESP_LOGI(TAG, "Update number: %s", mess_obj.number);
+                        write_to_file("number.txt", mess_obj.number);
+                    }
+                }
             }
         }
     }
@@ -129,7 +149,6 @@ static void mqtt_task(void *param)
 
 void mqtt_client_sta(void)
 {
-    esp_mqtt_client_handle_t client;  
     uint8_t broker[50] = {0};  
     ESP_LOGI(TAG, "MQTT init");
     ESP_LOGI(TAG, "Broker: %s", MQTT_BROKER);
@@ -137,6 +156,7 @@ void mqtt_client_sta(void)
     strcpy((char*)topic_sensor, TOPIC_SENSOR);
     strcpy((char*)topic_fota, TOPIC_FOTA);
     strcpy((char*)topic_process, TOPIC_PROCESS);
+    strcpy((char*)topic_number, TOPIC_NUMBER);
     mqtt_ring_buf = xRingbufferCreate(4096, RINGBUF_TYPE_NOSPLIT);
     if(mqtt_ring_buf == NULL)
         ESP_LOGE(TAG, "Failed to create ring buffer");

@@ -8,4 +8,5 @@
 
 esp_err_t sim_init(void);
 void sim_task(void *param);
+esp_err_t send_message(char *sim_mess, char *number);
 #endif

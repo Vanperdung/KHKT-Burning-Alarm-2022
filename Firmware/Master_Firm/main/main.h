@@ -5,7 +5,7 @@
 #define DISABLE_SC  8
 
 #define ENABLE_ALARM 4
-#define 
+#define DISABLE_ALARM 9
 
 typedef enum
 {
@@ -17,6 +17,7 @@ typedef enum
 
 typedef struct 
 {
+    char action[50];
     unsigned int roomID;
     unsigned int co2;
     unsigned int co;
@@ -25,6 +26,7 @@ typedef struct
     double hum;
     char url[100];
     unsigned int process;
+    char number[20];
 } _message_object;
 
 

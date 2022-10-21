@@ -40,6 +40,7 @@
 #include "smartconfig.h"
 #include "wifi.h"
 #include "main.h"
+#include "spiffs_user.h"
 
 static const char *TAG = "MAIN";
 RTC_NOINIT_ATTR int smartconfig_flag;
@@ -48,19 +49,18 @@ _status status;
 uint8_t topic_sensor[100] = {0};
 uint8_t topic_fota[100] = {0};
 uint8_t topic_process[100] = {0};
+uint8_t topic_number[100] = {0};
 
 void app_main(void)
 {
     ESP_ERROR_CHECK(nvs_flash_init());  
     status = LOCAL_MODE;
-    led_status_init();
-    led_onoff_init();
-    sim_init();
-    wifi_init();
     xTaskCreate(&led_status_task, "led_status_task", 2048, NULL, 5, NULL);
     xTaskCreate(&led_onoff_task, "led_onoff_task", 2048, NULL, 5, NULL);
     xTaskCreate(&button_task, "button_task", 2048, NULL, 10, NULL);
-    xTaskCreate(&sim_task, "sim_task", 2048, NULL, 10, NULL);
+    xTaskCreate(&sim_task, "sim_task", 4096, NULL, 10, NULL);
+    wifi_init();
+    mount_SPIFFS();
     if(smartconfig_flag == ENABLE_SC)
     {
         smartconfig_flag = DISABLE_SC;

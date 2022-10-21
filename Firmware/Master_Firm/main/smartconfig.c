@@ -122,7 +122,7 @@ static void smartconfig_task(void *param)
         {
             ESP_LOGI(TAG, "Smartconfig over");
             esp_smartconfig_stop();
-            // esp_restart();
+            esp_restart();
             vTaskDelete(NULL);
         }
     }
