@@ -8,7 +8,6 @@
 
 void led_status_init(void);
 void led_onoff_init(void);
-void led_status_task(void *param);
-void led_onoff_task(void *param);
+void led_task(void *param);
 
 #endif

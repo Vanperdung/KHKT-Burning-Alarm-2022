@@ -58,6 +58,9 @@
 
 #define TIMEOUT_RESET                   100
 
+void lora_task(void *param);
 void lora_init(void);
+void lora_set_frequency(long freq);
+void lora_enable_crc(void);
 
 #endif

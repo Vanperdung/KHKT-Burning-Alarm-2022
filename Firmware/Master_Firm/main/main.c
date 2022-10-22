@@ -55,12 +55,15 @@ void app_main(void)
 {
     ESP_ERROR_CHECK(nvs_flash_init());  
     status = LOCAL_MODE;
-    xTaskCreate(&led_status_task, "led_status_task", 2048, NULL, 5, NULL);
-    xTaskCreate(&led_onoff_task, "led_onoff_task", 2048, NULL, 5, NULL);
+    char sim_number[20] = {0};
+    xTaskCreate(&led_task, "led_status_task", 2048, NULL, 5, NULL);
     xTaskCreate(&button_task, "button_task", 2048, NULL, 10, NULL);
     xTaskCreate(&sim_task, "sim_task", 4096, NULL, 10, NULL);
+    xTaskCreate(&lora_task, "lora_task", 8192, NULL, 11, NULL);
     wifi_init();
     mount_SPIFFS();
+    read_from_file("number.txt", sim_number);
+    ESP_LOGI(TAG, "Sim number: %s", sim_number);
     if(smartconfig_flag == ENABLE_SC)
     {
         smartconfig_flag = DISABLE_SC;
