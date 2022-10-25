@@ -34,6 +34,25 @@ static const char *TAG = "LORA";
 static spi_device_handle_t spi_handle;
 static int implicit;
 static long frequency;
+extern RTC_NOINIT_ATTR int alarm_flag;
+
+typedef enum 
+{
+    NODE_1 = 1,
+    NODE_2,
+    NODE_3, 
+    NODE_4
+} node_id_t;
+
+typedef struct 
+{
+    char nodeID[10];
+    char type[10];
+    char alarm_status[5];
+    char temp[10];
+    char hum[10];
+    char mq7_status[5];
+} mess_t;
 
 uint8_t lora_read_reg(uint8_t reg)
 {
@@ -266,7 +285,7 @@ void lora_implicit_header_mode(int size)
     lora_write_reg(REG_PAYLOAD_LENGTH, size);
 }
 
-void lora_set_frequency(long freq)
+void lora_set_frequency(uint64_t freq)
 {
     ESP_LOGI(TAG, "Set frequency");
     frequency = freq;
@@ -344,21 +363,83 @@ void lora_disable_crc(void)
 
 void lora_task(void *param)
 {
-    uint8_t buf[100] = {0};
-    int x = 0;
+    int len = 0;
+    node_id_t node_id = NODE_1;
+    char request_mess[100] = {0};
+    char response_mess[100] = {0};
+    char alarm_status[5] = {0};
+    mess_t mess;
+    TickType_t tick_3 = 0;
+    TickType_t tick_9 = 0;
+    if(alarm_flag == ENABLE_ALARM)
+        strcpy(alarm_status, "on");
+    else
+    {
+        strcpy(alarm_status, "off");
+        alarm_flag = DISABLE_ALARM;
+    }
     lora_init();
-    lora_set_frequency(915e6);
+    lora_set_frequency(433E6);
     lora_enable_crc();
     while(1)
     {
-        lora_receive();
-        while(lora_received())
+        switch(node_id)
         {
-            x = lora_receive_packet(buf, sizeof(buf));
-            buf[x] = 0;  
-            ESP_LOGI(TAG, "Received: %s", (char*)buf); 
-            lora_receive();
+            case NODE_1:
+                sprintf(request_mess, "$,node_1,request,%s,*\r\n", alarm_status);
+                tick_9 = xTaskGetTickCount();
+                while(xTaskGetTickCount() - tick_9 < 9000 / portTICK_RATE_MS)
+                {
+                    tick_3 = xTaskGetTickCount();
+                    lora_send_packet((uint8_t*)request_mess, strlen(request_mess));
+                    ESP_LOGI(TAG, "Send request %s", request_mess);
+                    while(xTaskGetTickCount() - tick_3 < 3000 / portTICK_RATE_MS)
+                    {
+                        lora_receive();
+                        if(lora_received())
+                        {
+                            len = lora_receive_packet((uint8_t*)response_mess, sizeof(response_mess));
+                            response_mess[len] = '0';
+                            ESP_LOGI(TAG, "Receive packet: %s", response_mess);   
+                            if(response_mess[0] == '$')
+                            {
+                                sscanf(response_mess, "$,%[^,],%[^,],%[^,],%[^,],%[^,],*", mess.nodeID, mess.type, mess.temp, mess.hum, mess.mq7_status);
+                                if(strstr(mess.nodeID, "node_1") != NULL && strstr(mess.type, "response") != NULL)
+                                {
+                                    node_id = NODE_2;
+                                    break;
+                                }
+                            }
+                            else
+                            {
+                                ESP_LOGI(TAG, "Error packet");
+                                vTaskDelay(10 / portTICK_RATE_MS);
+                            }
+                        }
+                        else
+                            vTaskDelay(10 / portTICK_RATE_MS);
+                    }
+                }
+                ESP_LOGI(TAG, "Skip node_1");
+                node_id = NODE_2;   
+                break;
+            case NODE_2:
+                // sprintf(request_mess, "$,node_2,request,%s,*\r\n", alarm_status);
+                vTaskDelay(1000 / portTICK_RATE_MS);
+                node_id = NODE_3;
+                break;
+            case NODE_3:
+                // sprintf(request_mess, "$,node_3,request,%s,*\r\n", alarm_status);
+                vTaskDelay(1000 / portTICK_RATE_MS);
+                node_id = NODE_4;
+                break;
+            case NODE_4:
+                // sprintf(request_mess, "$,node_4,request,%s,*\r\n", alarm_status);
+                vTaskDelay(1000 / portTICK_RATE_MS);
+                node_id = NODE_1;
+                break;
+            default:
+                break;
         }
-        vTaskDelay(10 / portTICK_RATE_MS);
     }
 }

@@ -37,4 +37,5 @@ slave_firmmm/main.o: ..\Core\Src\main.c ..\Core\Inc\main.h \
   ..\Drivers\STM32G0xx_HAL_Driver\Inc\stm32g0xx_hal_uart.h \
   ..\Drivers\STM32G0xx_HAL_Driver\Inc\stm32g0xx_hal_uart_ex.h \
   ..\Core\Inc\i2c.h ..\Core\Inc\spi.h ..\Core\Inc\usart.h \
-  ..\Core\Inc\gpio.h ..\Core\Inc\aht10.h ..\Core\Inc\lora.h
+  ..\Core\Inc\gpio.h ..\Core\Inc\aht10.h ..\Core\Inc\lora.h \
+  C:\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdio.h

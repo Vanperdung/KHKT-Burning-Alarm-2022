@@ -37,8 +37,10 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-//#define GATE
-#define NODE
+//  #define GATE
+//  #define NODE
+  //#define REAL_GATE
+#define REAL_NODE
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -49,22 +51,15 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+lora_pins_t lora_pins;
+lora_t lora;
 typedef enum 
-{
-	LORA_NOT_RECV,
-	LORA_RECV
-} lora_recv_t;
-
-typedef enum
 {
   NODE_1 = 1,
   NODE_2,
   NODE_3,
   NODE_4
 } node_id_t;
-
-node_id_t node_id = NODE_1;
-lora_recv_t lora_recv_state;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -75,6 +70,11 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void debug(char *data)
+{
+  HAL_UART_Transmit(&huart1, (uint8_t*)data, (uint16_t)strlen(data), 1000);
+}
+
 void switch_relay(GPIO_PinState PinState)
 {
 	HAL_GPIO_WritePin(GPIOB, RL1_Pin, PinState);
@@ -91,26 +91,14 @@ void switch_relay(GPIO_PinState PinState)
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	uint32_t lora_tx_tick = 0;
-  uint32_t lora_rx_tick = 0;
-	char temp[10] = {0};
-	char hum[10] = {0};
-	GPIO_PinState mq7_state;
-	uint16_t lora_state;
-	char send_data[200] = {0};
-  char recv_data[200] = {0};
-  char lora_state_str[20] = {0};
-  LoRa myLoRa;
-  int packet_size = 0;
-
-	myLoRa = newLoRa();
-	myLoRa.CS_port = LORA_NSS_GPIO_Port;
-	myLoRa.CS_pin = LORA_NSS_Pin;
-	myLoRa.reset_port = LORA_RST_GPIO_Port;
-	myLoRa.reset_pin = LORA_RST_Pin;
-	myLoRa.DIO0_port = LORA_EXTI_GPIO_Port;
-	myLoRa.DIO0_pin = LORA_EXTI_Pin;
-	myLoRa.hSPIx = &hspi1;
+  char data_send[128] = {0};
+  char data_recv[128] = {0};
+  char temp[10] = {0};
+  char hum[10] = {0};
+  int packet_count = 0;
+  char msg[64] = {0};
+  node_id_t node_id = NODE_1;
+  uint32_t tick = 0;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -135,11 +123,23 @@ int main(void)
   MX_SPI1_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-	LoRa_reset(&myLoRa);
-	lora_state = LoRa_init(&myLoRa);
-	sprintf(lora_state_str, "State: %d\r\n", lora_state);
-	HAL_UART_Transmit(&huart1, (uint8_t*)lora_state_str, sizeof(lora_state_str), 100);
-	LoRa_startReceiving(&myLoRa);
+  lora_pins.nss.port = LORA_SS_PORT;
+	lora_pins.nss.pin = LORA_SS_PIN;					
+	lora_pins.reset.port = LORA_RESET_PORT;			
+	lora_pins.reset.pin = LORA_RESET_PIN;			
+	lora_pins.spi = &hspi1;
+  lora.pin = &lora_pins;											
+	lora.frequency = FREQ_433MHZ;
+  sprintf(msg, "Configuring LoRa module\r\n");
+	debug(msg);
+  while(lora_init(&lora))
+  {										
+		sprintf(msg, "LoRa Failed\r\n");
+		debug(msg);
+		HAL_Delay(1000);
+	}
+  sprintf(msg, "LoRa init done\r\n");
+  debug(msg);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -150,67 +150,106 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
     #ifdef GATE
+      lora_begin_packet(&lora);
+      sprintf(data_send, "GATEWAY %d\r\n", packet_count++);
+      lora_tx(&lora, (uint8_t *)data_send, strlen(data_send));
+      lora_end_packet(&lora);
+      debug(data_send);
+      HAL_Delay(1000);
+    #endif
+
+    #ifdef NODE
+      uint8_t ret = lora_prasePacket(&lora);
+      if(ret)
+      {
+        uint8_t i = 0;
+        while(lora_available(&lora))
+        {
+          data_recv[i] = lora_read(&lora);
+          i++;
+			  }
+        data_recv[i] = '\0';
+			  sprintf(msg, "Receive: %s\r\n", data_recv);
+        debug(msg);
+      }
+    #endif
+
+    #ifdef REAL_GATE
       switch(node_id)
       {
         case NODE_1:
-          HAL_UART_Transmit(&huart1, (uint8_t*)"Gate send request\r\n", sizeof("Gate send request\r\n"), 500);
-          while(packet_size == 0)
+          lora_begin_packet(&lora);
+          sprintf(data_send, "Node_1\r\n");
+          lora_tx(&lora, (uint8_t *)data_send, strlen(data_send));
+          lora_end_packet(&lora);
+          debug(data_send);
+          // HAL_Delay(1000);
+          while(!lora_prasePacket(&lora))
           {
-            LoRa_transmit(&myLoRa, (uint8_t*)"1\r\n", sizeof("1\r\n"), 1000);
-            HAL_Delay(2000);
-            packet_size = LoRa_receive(&myLoRa, (uint8_t*)recv_data, 128);
-            HAL_Delay(500);
+            HAL_Delay(100);
           }
-          HAL_UART_Transmit(&huart1, (uint8_t*)"Receive data from node 1: ", sizeof("Receive data from node 1: "), 500);
-          HAL_UART_Transmit(&huart1, (uint8_t*)recv_data, sizeof(recv_data), 500);
-          HAL_Delay(2000);
-          LoRa_transmit(&myLoRa, (uint8_t*)"1,ACK\r\n", sizeof("1,ACK\r\n"), 1000);
-          HAL_Delay(2000);
-          break;
+          uint8_t i = 0;
+          while(lora_available(&lora))
+          {
+            data_recv[i] = lora_read(&lora);
+            i++;
+          }
+            // data_recv[i] = '\0';
+          sprintf(msg, "Gate receive: %s\r\n", data_recv);
+          debug(msg);
+					node_id = NODE_2;
+          break;  
         case NODE_2:
-          HAL_Delay(1500);
-          node_id = NODE_3;
+					node_id = NODE_3;
+          HAL_Delay(1000);
           break;
         case NODE_3:
-          HAL_Delay(1500);
-          node_id = NODE_4;
+					node_id = NODE_4;
+          HAL_Delay(1000);
           break;
         case NODE_4:
-          HAL_Delay(1500);
-          node_id = NODE_1;
+					node_id = NODE_1;
+          HAL_Delay(1000);
           break;
         default:
-          HAL_Delay(1500);
+
           break;
       }
     #endif
 
-    #ifdef NODE
-      while(packet_size == 0)
+    #ifdef REAL_NODE
+      if(HAL_GetTick() - tick > 5000 || tick == 0)
       {
-        packet_size = LoRa_receive(&myLoRa, (uint8_t*)recv_data, 128);
-        HAL_Delay(500);
+        tick = HAL_GetTick();
+        aht10_read_data(temp, hum);   
+        sprintf(data_send, "$,%s,%s,*\r\n", temp, hum);
+        if(HAL_GPIO_ReadPin(GPIOB, MQ7_DIGIT_Pin) == GPIO_PIN_RESET)
+          switch_relay(GPIO_PIN_SET);
+        else 
+          switch_relay(GPIO_PIN_RESET);
       }
-      HAL_UART_Transmit(&huart1, (uint8_t*)"Receive request from gate: ", sizeof("Receive request from gate: "), 500);
-      HAL_UART_Transmit(&huart1, (uint8_t*)recv_data, sizeof(recv_data), 500);
-      aht10_read_data(temp, hum);
-      sprintf(send_data, "$,1,%s,%s,*\r\n", temp, hum);
-      mq7_state = HAL_GPIO_ReadPin(GPIOB, MQ7_DIGIT_Pin);
-      if(mq7_state == GPIO_PIN_RESET)
-        switch_relay(GPIO_PIN_SET);
-      else 
-        switch_relay(GPIO_PIN_RESET);
-      // HAL_Delay(2000);
-      while(packet_size == 0)
+      uint8_t ret = lora_prasePacket(&lora);
+      if(ret)
       {
-        LoRa_transmit(&myLoRa, (uint8_t*)send_data, sizeof(send_data), 1000);
-        HAL_Delay(2000);
-        packet_size = LoRa_receive(&myLoRa, (uint8_t*)recv_data, 128);
-        HAL_Delay(500);
-      }
-      HAL_UART_Transmit(&huart1, (uint8_t*)"Receive ack from gate: ", sizeof("Receive ack from gate: "), 500);
-      HAL_UART_Transmit(&huart1, (uint8_t*)recv_data, sizeof(recv_data), 100);
-      HAL_Delay(2000);
+        uint8_t i = 0;
+        while(lora_available(&lora))
+        {
+          data_recv[i] = lora_read(&lora);
+          i++;
+			  }
+        // data_recv[i] = '\0';
+			  sprintf(msg, "Node receive: %s", data_recv);
+        debug(msg);
+        if(strstr(data_recv, "Node_1") != NULL)
+        {
+          lora_begin_packet(&lora);
+          lora_tx(&lora, (uint8_t *)data_send, strlen(data_send));
+          lora_end_packet(&lora);
+          debug(data_send);
+        }
+        else
+          debug("Skip\r\n");
+      }      
     #endif
   }
   /* USER CODE END 3 */
