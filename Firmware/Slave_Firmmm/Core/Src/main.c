@@ -37,7 +37,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define NODE_ID 0
+#define NODE_ID 1
 
 /* USER CODE END PD */
 

@@ -43,10 +43,10 @@
 #include "spiffs_user.h"
 
 static const char *TAG = "MQTT";
-extern uint8_t topic_room_1_sensor[100] = {0};
-extern uint8_t topic_room_2_sensor[100] = {0};
-extern uint8_t topic_room_3_sensor[100] = {0};
-extern uint8_t topic_room_4_sensor[100] = {0};
+extern uint8_t topic_room_1_sensor[100];
+extern uint8_t topic_room_2_sensor[100];
+extern uint8_t topic_room_3_sensor[100];
+extern uint8_t topic_room_4_sensor[100];
 extern uint8_t topic_fota[100];
 extern uint8_t topic_process[100];
 extern uint8_t topic_number[100];
