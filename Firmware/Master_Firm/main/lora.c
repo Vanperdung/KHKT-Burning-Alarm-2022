@@ -11,6 +11,7 @@
 #include "esp_system.h"
 #include "esp_event.h"
 #include "esp_log.h"
+#include "mqtt_client.h"
 
 #include "driver/gpio.h"
 #include "driver/uart.h"
@@ -34,7 +35,13 @@ static const char *TAG = "LORA";
 static spi_device_handle_t spi_handle;
 static int implicit;
 static long frequency;
+esp_mqtt_client_handle_t client; 
 extern RTC_NOINIT_ATTR int alarm_flag;
+extern uint8_t topic_room_1_sensor[100] = {0};
+extern uint8_t topic_room_2_sensor[100] = {0};
+extern uint8_t topic_room_3_sensor[100] = {0};
+extern uint8_t topic_room_4_sensor[100] = {0};
+extern _status status;    
 
 typedef enum 
 {
@@ -52,6 +59,8 @@ typedef struct
     char temp[10];
     char hum[10];
     char mq7_status[5];
+    char co2[10];
+    char tvoc[10];
 } mess_t;
 
 uint8_t lora_read_reg(uint8_t reg)
@@ -371,6 +380,8 @@ void lora_task(void *param)
     mess_t mess;
     TickType_t tick_3 = 0;
     TickType_t tick_9 = 0;
+    char mqtt_mess[100] = {0};
+    bool recv_flag = false;
     if(alarm_flag == ENABLE_ALARM)
         strcpy(alarm_status, "on");
     else
@@ -388,31 +399,37 @@ void lora_task(void *param)
             case NODE_1:
                 sprintf(request_mess, "$,node_1,request,%s,*\r\n", alarm_status);
                 tick_9 = xTaskGetTickCount();
-                while(xTaskGetTickCount() - tick_9 < 9000 / portTICK_RATE_MS)
+                while((xTaskGetTickCount() - tick_9 < 9000 / portTICK_RATE_MS) && (recv_flag == false))
                 {
                     tick_3 = xTaskGetTickCount();
                     lora_send_packet((uint8_t*)request_mess, strlen(request_mess));
                     ESP_LOGI(TAG, "Send request %s", request_mess);
-                    while(xTaskGetTickCount() - tick_3 < 3000 / portTICK_RATE_MS)
+                    while((xTaskGetTickCount() - tick_3 < 3000 / portTICK_RATE_MS))
                     {
                         lora_receive();
                         if(lora_received())
                         {
                             len = lora_receive_packet((uint8_t*)response_mess, sizeof(response_mess));
-                            response_mess[len] = '0';
+                            response_mess[len] = '\0';
                             ESP_LOGI(TAG, "Receive packet: %s", response_mess);   
                             if(response_mess[0] == '$')
                             {
                                 sscanf(response_mess, "$,%[^,],%[^,],%[^,],%[^,],%[^,],*", mess.nodeID, mess.type, mess.temp, mess.hum, mess.mq7_status);
                                 if(strstr(mess.nodeID, "node_1") != NULL && strstr(mess.type, "response") != NULL)
                                 {
-                                    node_id = NODE_2;
+                                    recv_flag = true;
+                                    if(status == NORMAL_MODE)
+                                    {
+                                        // sprintf(mqtt_mes, "{\"co2\":%s,\"tvoc\":%s,\"alarm\":\"%s\",\"temp\":%s,\"hum\":%s"},mess.co2, mess.tvoc, mess.alarm_status, mess.temp, mess.hum);
+                                        sprintf(mqtt_mess, "{\"alarm\":\"%s\",\"temp\":%s,\"hum\":%s}", mess.alarm_status, mess.temp, mess.hum);
+                                        esp_mqtt_client_publish(client, topic_room_1_sensor, mqtt_mess, strlen(mqtt_mess), 0, 0);
+                                    }
                                     break;
                                 }
                             }
                             else
                             {
-                                ESP_LOGI(TAG, "Error packet");
+                                ESP_LOGE(TAG, "Error packet");
                                 vTaskDelay(10 / portTICK_RATE_MS);
                             }
                         }
@@ -420,23 +437,152 @@ void lora_task(void *param)
                             vTaskDelay(10 / portTICK_RATE_MS);
                     }
                 }
-                ESP_LOGI(TAG, "Skip node_1");
-                node_id = NODE_2;   
+                if(node_id == NODE_1)
+                {
+                    ESP_LOGE(TAG, "Skip node_1");
+                    node_id = NODE_2;  
+                } 
                 break;
             case NODE_2:
-                // sprintf(request_mess, "$,node_2,request,%s,*\r\n", alarm_status);
-                vTaskDelay(1000 / portTICK_RATE_MS);
-                node_id = NODE_3;
+                sprintf(request_mess, "$,node_2,request,%s,*\r\n", alarm_status);
+                tick_9 = xTaskGetTickCount();
+                while((xTaskGetTickCount() - tick_9 < 9000 / portTICK_RATE_MS) && (recv_flag == false))
+                {
+                    tick_3 = xTaskGetTickCount();
+                    lora_send_packet((uint8_t*)request_mess, strlen(request_mess));
+                    ESP_LOGI(TAG, "Send request %s", request_mess);
+                    while((xTaskGetTickCount() - tick_3 < 3000 / portTICK_RATE_MS))
+                    {
+                        lora_receive();
+                        if(lora_received())
+                        {
+                            len = lora_receive_packet((uint8_t*)response_mess, sizeof(response_mess));
+                            response_mess[len] = '\0';
+                            ESP_LOGI(TAG, "Receive packet: %s", response_mess);   
+                            if(response_mess[0] == '$')
+                            {
+                                sscanf(response_mess, "$,%[^,],%[^,],%[^,],%[^,],%[^,],*", mess.nodeID, mess.type, mess.temp, mess.hum, mess.mq7_status);
+                                if(strstr(mess.nodeID, "node_2") != NULL && strstr(mess.type, "response") != NULL)
+                                {
+                                    recv_flag = true;
+                                    if(status == NORMAL_MODE)
+                                    {
+                                        // sprintf(mqtt_mes, "{\"co2\":%s,\"tvoc\":%s,\"alarm\":\"%s\",\"temp\":%s,\"hum\":%s"},mess.co2, mess.tvoc, mess.alarm_status, mess.temp, mess.hum);
+                                        sprintf(mqtt_mess, "{\"alarm\":\"%s\",\"temp\":%s,\"hum\":%s}", mess.alarm_status, mess.temp, mess.hum);
+                                        esp_mqtt_client_publish(client, topic_room_1_sensor, mqtt_mess, strlen(mqtt_mess), 0, 0);
+                                    }                                    
+                                    break;
+                                }
+                            }
+                            else
+                            {
+                                ESP_LOGE(TAG, "Error packet");
+                                vTaskDelay(10 / portTICK_RATE_MS);
+                            }
+                        }
+                        else
+                            vTaskDelay(10 / portTICK_RATE_MS);
+                    }
+                }
+                if(node_id == NODE_2)
+                {
+                    ESP_LOGE(TAG, "Skip node_2");
+                    node_id = NODE_3;  
+                } 
                 break;
             case NODE_3:
-                // sprintf(request_mess, "$,node_3,request,%s,*\r\n", alarm_status);
-                vTaskDelay(1000 / portTICK_RATE_MS);
-                node_id = NODE_4;
+                sprintf(request_mess, "$,node_3,request,%s,*\r\n", alarm_status);
+                tick_9 = xTaskGetTickCount();
+                while((xTaskGetTickCount() - tick_9 < 9000 / portTICK_RATE_MS) && (recv_flag == false))
+                {
+                    tick_3 = xTaskGetTickCount();
+                    lora_send_packet((uint8_t*)request_mess, strlen(request_mess));
+                    ESP_LOGI(TAG, "Send request %s", request_mess);
+                    while((xTaskGetTickCount() - tick_3 < 3000 / portTICK_RATE_MS))
+                    {
+                        lora_receive();
+                        if(lora_received())
+                        {
+                            len = lora_receive_packet((uint8_t*)response_mess, sizeof(response_mess));
+                            response_mess[len] = '\0';
+                            ESP_LOGI(TAG, "Receive packet: %s", response_mess);   
+                            if(response_mess[0] == '$')
+                            {
+                                sscanf(response_mess, "$,%[^,],%[^,],%[^,],%[^,],%[^,],*", mess.nodeID, mess.type, mess.temp, mess.hum, mess.mq7_status);
+                                if(strstr(mess.nodeID, "node_3") != NULL && strstr(mess.type, "response") != NULL)
+                                {
+                                    recv_flag = true;
+                                    if(status == NORMAL_MODE)
+                                    {
+                                        // sprintf(mqtt_mes, "{\"co2\":%s,\"tvoc\":%s,\"alarm\":\"%s\",\"temp\":%s,\"hum\":%s"},mess.co2, mess.tvoc, mess.alarm_status, mess.temp, mess.hum);
+                                        sprintf(mqtt_mess, "{\"alarm\":\"%s\",\"temp\":%s,\"hum\":%s}", mess.alarm_status, mess.temp, mess.hum);
+                                        esp_mqtt_client_publish(client, topic_room_1_sensor, mqtt_mess, strlen(mqtt_mess), 0, 0);
+                                    }
+                                    break;
+                                }
+                            }
+                            else
+                            {
+                                ESP_LOGE(TAG, "Error packet");
+                                vTaskDelay(10 / portTICK_RATE_MS);
+                            }
+                        }
+                        else
+                            vTaskDelay(10 / portTICK_RATE_MS);
+                    }
+                }
+                if(node_id == NODE_3)
+                {
+                    ESP_LOGE(TAG, "Skip node_3");
+                    node_id = NODE_4;  
+                } 
                 break;
             case NODE_4:
-                // sprintf(request_mess, "$,node_4,request,%s,*\r\n", alarm_status);
-                vTaskDelay(1000 / portTICK_RATE_MS);
-                node_id = NODE_1;
+                sprintf(request_mess, "$,node_4,request,%s,*\r\n", alarm_status);
+                tick_9 = xTaskGetTickCount();
+                while((xTaskGetTickCount() - tick_9 < 9000 / portTICK_RATE_MS) && (recv_flag == false))
+                {
+                    tick_3 = xTaskGetTickCount();
+                    lora_send_packet((uint8_t*)request_mess, strlen(request_mess));
+                    ESP_LOGI(TAG, "Send request %s", request_mess);
+                    while((xTaskGetTickCount() - tick_3 < 3000 / portTICK_RATE_MS))
+                    {
+                        lora_receive();
+                        if(lora_received())
+                        {
+                            len = lora_receive_packet((uint8_t*)response_mess, sizeof(response_mess));
+                            response_mess[len] = '\0';
+                            ESP_LOGI(TAG, "Receive packet: %s", response_mess);   
+                            if(response_mess[0] == '$')
+                            {
+                                sscanf(response_mess, "$,%[^,],%[^,],%[^,],%[^,],%[^,],*", mess.nodeID, mess.type, mess.temp, mess.hum, mess.mq7_status);
+                                if(strstr(mess.nodeID, "node_4") != NULL && strstr(mess.type, "response") != NULL)
+                                {
+                                    recv_flag = true;
+                                    if(status == NORMAL_MODE)
+                                    {
+                                        // sprintf(mqtt_mes, "{\"co2\":%s,\"tvoc\":%s,\"alarm\":\"%s\",\"temp\":%s,\"hum\":%s"},mess.co2, mess.tvoc, mess.alarm_status, mess.temp, mess.hum);
+                                        sprintf(mqtt_mess, "{\"alarm\":\"%s\",\"temp\":%s,\"hum\":%s}", mess.alarm_status, mess.temp, mess.hum);
+                                        esp_mqtt_client_publish(client, topic_room_1_sensor, mqtt_mess, strlen(mqtt_mess), 0, 0);
+                                    }
+                                    break;
+                                }
+                            }
+                            else
+                            {
+                                ESP_LOGE(TAG, "Error packet");
+                                vTaskDelay(10 / portTICK_RATE_MS);
+                            }
+                        }
+                        else
+                            vTaskDelay(10 / portTICK_RATE_MS);
+                    }
+                }
+                if(node_id == NODE_4)
+                {
+                    ESP_LOGE(TAG, "Skip node_4");
+                    node_id = NODE_1;  
+                } 
                 break;
             default:
                 break;

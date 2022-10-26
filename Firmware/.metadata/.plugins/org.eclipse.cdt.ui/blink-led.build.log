@@ -1,0 +1,19 @@
+17:53:20 **** Incremental Build of configuration Debug for project blink-led ****
+make -j8 all 
+arm-none-eabi-gcc -o "blink-led.elf" @"objects.list"   -mcpu=cortex-m3 -T"D:\KHKT-Burning-Alarm-2022\Firmware\blink-led\STM32F103C8TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="blink-led.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Finished building target: blink-led.elf
+ 
+arm-none-eabi-size   blink-led.elf 
+arm-none-eabi-objdump -h -S  blink-led.elf  > "blink-led.list"
+arm-none-eabi-objcopy  -O ihex  blink-led.elf  "blink-led.hex"
+   text	   data	    bss	    dec	    hex	filename
+   4628	     20	   1572	   6220	   184c	blink-led.elf
+Finished building: default.size.stdout
+ 
+Finished building: blink-led.list
+ 
+Finished building: blink-led.hex
+ 
+
+17:53:21 Build Finished. 0 errors, 0 warnings. (took 796ms)
+

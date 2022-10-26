@@ -37,10 +37,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-//  #define GATE
-//  #define NODE
-  //#define REAL_GATE
-#define REAL_NODE
+#define NODE_ID 0
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -53,13 +51,16 @@
 /* USER CODE BEGIN PV */
 lora_pins_t lora_pins;
 lora_t lora;
-typedef enum 
+typedef struct 
 {
-  NODE_1 = 1,
-  NODE_2,
-  NODE_3,
-  NODE_4
-} node_id_t;
+    char *nodeID;
+    char type[10];
+    char alarm_status[5];
+    char temp[10];
+    char hum[10];
+    char mq7_status[5];
+} mess_t;
+char *node_id[10] = {"node_1", "node_2", "node_3", "node_4"};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -93,12 +94,11 @@ int main(void)
   /* USER CODE BEGIN 1 */
   char data_send[128] = {0};
   char data_recv[128] = {0};
-  char temp[10] = {0};
-  char hum[10] = {0};
-  int packet_count = 0;
   char msg[64] = {0};
-  node_id_t node_id = NODE_1;
   uint32_t tick = 0;
+  mess_t mess = {
+    .nodeID = node_id[NODE_ID]
+  };
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -149,108 +149,52 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    #ifdef GATE
-      lora_begin_packet(&lora);
-      sprintf(data_send, "GATEWAY %d\r\n", packet_count++);
-      lora_tx(&lora, (uint8_t *)data_send, strlen(data_send));
-      lora_end_packet(&lora);
-      debug(data_send);
-      HAL_Delay(1000);
-    #endif
-
-    #ifdef NODE
-      uint8_t ret = lora_prasePacket(&lora);
-      if(ret)
+    if(HAL_GetTick() - tick > 5000 || tick == 0)
+    {
+      tick = HAL_GetTick();
+      aht10_read_data(mess.temp, mess.hum);   
+      sprintf(data_send, "$,%s,%s,*\r\n", mess.temp, mess.hum);
+      if(HAL_GPIO_ReadPin(GPIOB, MQ7_DIGIT_Pin) == GPIO_PIN_RESET)
       {
-        uint8_t i = 0;
-        while(lora_available(&lora))
-        {
-          data_recv[i] = lora_read(&lora);
-          i++;
-			  }
-        data_recv[i] = '\0';
-			  sprintf(msg, "Receive: %s\r\n", data_recv);
-        debug(msg);
+        switch_relay(GPIO_PIN_SET);
+        sprintf(mess.mq7_status, "on");
       }
-    #endif
+      else
+      { 
+        switch_relay(GPIO_PIN_RESET);
+        sprintf(mess.mq7_status, "off");
+      }
+    }
 
-    #ifdef REAL_GATE
-      switch(node_id)
+    uint8_t ret = lora_prasePacket(&lora);
+    if(ret)
+    {
+      uint8_t i = 0;
+      while(lora_available(&lora))
       {
-        case NODE_1:
-          lora_begin_packet(&lora);
-          sprintf(data_send, "Node_1\r\n");
-          lora_tx(&lora, (uint8_t *)data_send, strlen(data_send));
-          lora_end_packet(&lora);
-          debug(data_send);
-          // HAL_Delay(1000);
-          while(!lora_prasePacket(&lora))
-          {
-            HAL_Delay(100);
-          }
-          uint8_t i = 0;
-          while(lora_available(&lora))
-          {
-            data_recv[i] = lora_read(&lora);
-            i++;
-          }
-            // data_recv[i] = '\0';
-          sprintf(msg, "Gate receive: %s\r\n", data_recv);
+        data_recv[i] = lora_read(&lora);
+        i++;
+      }
+      data_recv[i] = '\0';
+      sprintf(msg, "Receive: %s\r\n", data_recv);
+      debug(msg);
+      if(data_recv[0] == '$')
+      {
+        sscanf(data_recv, "$,%[^,],%[^,],%[^,],*", mess.nodeID, mess.type, mess.alarm_status);
+        if(strstr(mess.nodeID, node_id[NODE_ID]) != NULL && strstr(mess.type, "request") != NULL)
+        {
+          sprintf(msg, "Receive request: ");
           debug(msg);
-					node_id = NODE_2;
-          break;  
-        case NODE_2:
-					node_id = NODE_3;
-          HAL_Delay(1000);
-          break;
-        case NODE_3:
-					node_id = NODE_4;
-          HAL_Delay(1000);
-          break;
-        case NODE_4:
-					node_id = NODE_1;
-          HAL_Delay(1000);
-          break;
-        default:
-
-          break;
-      }
-    #endif
-
-    #ifdef REAL_NODE
-      if(HAL_GetTick() - tick > 5000 || tick == 0)
-      {
-        tick = HAL_GetTick();
-        aht10_read_data(temp, hum);   
-        sprintf(data_send, "$,%s,%s,*\r\n", temp, hum);
-        if(HAL_GPIO_ReadPin(GPIOB, MQ7_DIGIT_Pin) == GPIO_PIN_RESET)
-          switch_relay(GPIO_PIN_SET);
-        else 
-          switch_relay(GPIO_PIN_RESET);
-      }
-      uint8_t ret = lora_prasePacket(&lora);
-      if(ret)
-      {
-        uint8_t i = 0;
-        while(lora_available(&lora))
-        {
-          data_recv[i] = lora_read(&lora);
-          i++;
-			  }
-        // data_recv[i] = '\0';
-			  sprintf(msg, "Node receive: %s", data_recv);
-        debug(msg);
-        if(strstr(data_recv, "Node_1") != NULL)
-        {
           lora_begin_packet(&lora);
+          sprintf(data_send, "$,%s,response,%s,%s,%s,*\r\n", mess.nodeID, mess.temp, mess.hum, mess.mq7_status);
           lora_tx(&lora, (uint8_t *)data_send, strlen(data_send));
           lora_end_packet(&lora);
           debug(data_send);
         }
-        else
-          debug("Skip\r\n");
-      }      
-    #endif
+      }
+    }
+    else
+      HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }

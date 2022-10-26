@@ -43,7 +43,10 @@
 #include "spiffs_user.h"
 
 static const char *TAG = "MQTT";
-extern uint8_t topic_sensor[100];
+extern uint8_t topic_room_1_sensor[100] = {0};
+extern uint8_t topic_room_2_sensor[100] = {0};
+extern uint8_t topic_room_3_sensor[100] = {0};
+extern uint8_t topic_room_4_sensor[100] = {0};
 extern uint8_t topic_fota[100];
 extern uint8_t topic_process[100];
 extern uint8_t topic_number[100];
@@ -153,7 +156,10 @@ void mqtt_client_sta(void)
     ESP_LOGI(TAG, "MQTT init");
     ESP_LOGI(TAG, "Broker: %s", MQTT_BROKER);
     sprintf((char*)broker, "mqtt://%s", MQTT_BROKER);
-    strcpy((char*)topic_sensor, TOPIC_SENSOR);
+    strcpy((char*)topic_room_1_sensor, TOPIC_ROOM_1_SENSOR);
+    strcpy((char*)topic_room_2_sensor, TOPIC_ROOM_2_SENSOR);
+    strcpy((char*)topic_room_3_sensor, TOPIC_ROOM_3_SENSOR);
+    strcpy((char*)topic_room_4_sensor, TOPIC_ROOM_4_SENSOR);
     strcpy((char*)topic_fota, TOPIC_FOTA);
     strcpy((char*)topic_process, TOPIC_PROCESS);
     strcpy((char*)topic_number, TOPIC_NUMBER);
