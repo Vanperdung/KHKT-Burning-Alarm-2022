@@ -61,8 +61,6 @@ void app_main(void)
     char sim_number[20] = {0};
     xTaskCreate(&led_task, "led_status_task", 2048, NULL, 5, NULL);
     xTaskCreate(&button_task, "button_task", 2048, NULL, 10, NULL);
-    xTaskCreate(&sim_task, "sim_task", 4096, NULL, 10, NULL);
-    xTaskCreate(&lora_task, "lora_task", 8192, NULL, 11, NULL);
     wifi_init();
     mount_SPIFFS();
     read_from_file("number.txt", sim_number);
@@ -75,6 +73,8 @@ void app_main(void)
     }
     else
     {
+        xTaskCreate(&sim_task, "sim_task", 4096, NULL, 10, NULL);
+        xTaskCreate(&lora_task, "lora_task", 8192, NULL, 11, NULL);
         wifi_config_t wifi_cfg = {
             .sta = {
                 .threshold.authmode = WIFI_AUTH_WPA2_PSK,

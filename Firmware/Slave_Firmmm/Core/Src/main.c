@@ -37,7 +37,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define NODE_ID 1
+#define NODE_ID 3
 
 /* USER CODE END PD */
 
@@ -53,7 +53,7 @@ lora_pins_t lora_pins;
 lora_t lora;
 typedef struct 
 {
-    char *nodeID;
+    char nodeID[10];
     char type[10];
     char alarm_status[5];
     char temp[10];
@@ -96,9 +96,7 @@ int main(void)
   char data_recv[128] = {0};
   char msg[64] = {0};
   uint32_t tick = 0;
-  mess_t mess = {
-    .nodeID = node_id[NODE_ID]
-  };
+  mess_t mess;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -183,7 +181,7 @@ int main(void)
         sscanf(data_recv, "$,%[^,],%[^,],%[^,],*", mess.nodeID, mess.type, mess.alarm_status);
         if(strstr(mess.nodeID, node_id[NODE_ID]) != NULL && strstr(mess.type, "request") != NULL)
         {
-          sprintf(msg, "Receive request: ");
+          sprintf(msg, "Send request: ");
           debug(msg);
           lora_begin_packet(&lora);
           sprintf(data_send, "$,%s,response,%s,%s,%s,*\r\n", mess.nodeID, mess.temp, mess.hum, mess.mq7_status);

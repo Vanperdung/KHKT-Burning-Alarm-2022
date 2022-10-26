@@ -189,15 +189,5 @@ void sim_task(void *param)
     } while(ret != ESP_OK);
     ESP_LOGI(TAG, "Sim init done");
     vTaskDelay(2000 / portTICK_RATE_MS);
-    while(1)
-    {
-        // read_from_file("number.txt", number);
-        // if(strlen(number) > 5)
-        // {
-        //     send_message("CHAY NHE NAY :)", number);
-        //     vTaskSuspend(NULL);
-        // }
-        // else
-            vTaskDelay(1000 / portTICK_RATE_MS);
-    }
+    vTaskSuspend(NULL);
 }

@@ -440,7 +440,10 @@ void lora_task(void *param)
                 if(recv_flag == false)
                     ESP_LOGE(TAG, "Skip node_1");
                 else
+                {
                     recv_flag = false;
+                    while(xTaskGetTickCount() - tick_3 < 3000 / portTICK_RATE_MS);
+                }
                 node_id = NODE_2;  
                 break;
             case NODE_2:
@@ -487,7 +490,10 @@ void lora_task(void *param)
                 if(recv_flag == false)
                     ESP_LOGE(TAG, "Skip node_2");
                 else
+                {
                     recv_flag = false;
+                    while(xTaskGetTickCount() - tick_3 < 3000 / portTICK_RATE_MS);
+                }
                 node_id = NODE_3;  
                 break;
             case NODE_3:
@@ -534,7 +540,10 @@ void lora_task(void *param)
                 if(recv_flag == false)
                     ESP_LOGE(TAG, "Skip node_3");
                 else
+                {
                     recv_flag = false;
+                    while(xTaskGetTickCount() - tick_3 < 3000 / portTICK_RATE_MS);
+                }
                 node_id = NODE_4;  
                 break;
             case NODE_4:
@@ -581,7 +590,10 @@ void lora_task(void *param)
                 if(recv_flag == false)
                     ESP_LOGE(TAG, "Skip node_4");
                 else
+                {
                     recv_flag = false;
+                    while(xTaskGetTickCount() - tick_3 < 3000 / portTICK_RATE_MS);
+                }
                 node_id = NODE_1;  
                 break;
             default:
