@@ -27,6 +27,7 @@ typedef struct
     char url[100];
     unsigned int process;
     char number[20];
+    char message[50];
 } _message_object;
 
 

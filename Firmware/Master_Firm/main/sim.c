@@ -34,6 +34,9 @@
 #include "spiffs_user.h"
 
 static const char *TAG = "SIM";
+bool send_sms_alarm_flag = false;
+extern RTC_NOINIT_ATTR int alarm_flag;
+
 static void uart_init(void)
 {
     uart_config_t uart_cfg = {
@@ -181,6 +184,7 @@ void sim_task(void *param)
 {
     esp_err_t ret;
     char number[20] = {0};
+    char message[50] = {0};
     uart_init();
     gpio_sim_init();
     do
@@ -189,5 +193,19 @@ void sim_task(void *param)
     } while(ret != ESP_OK);
     ESP_LOGI(TAG, "Sim init done");
     vTaskDelay(2000 / portTICK_RATE_MS);
-    vTaskSuspend(NULL);
+    while(1)
+    {
+        if(send_sms_alarm_flag == false && alarm_flag == ENABLE_ALARM)
+        {
+            read_from_file("number.txt", number);
+            read_from_file("message.txt", message);
+            if(strlen(number) > 0 && strlen(message) > 0)
+                send_message(message, number);
+            else
+                ESP_LOGE(TAG, "Read number or message fail");
+            send_sms_alarm_flag = true;
+        }
+        else
+            vTaskDelay(100 / portTICK_RATE_MS);
+    }
 }

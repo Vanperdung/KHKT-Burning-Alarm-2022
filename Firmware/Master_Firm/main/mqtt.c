@@ -145,6 +145,16 @@ static void mqtt_task(void *param)
                         write_to_file("number.txt", mess_obj.number);
                     }
                 }
+                if(strcmp(mess_obj.action, "update_message") == 0)
+                {
+                    if(strlen(mess_obj.message) < 1)
+                        ESP_LOGE(TAG, "Message not correct");
+                    else
+                    {
+                        ESP_LOGI(TAG, "Update message: %s", mess_obj.message);
+                        write_to_file("message.txt", mess_obj.message);
+                    }
+                }
             }
         }
     }
