@@ -1,0 +1,6 @@
+../Core/Src/aht10.c:18:6:reverse	32	static
+../Core/Src/aht10.c:30:5:intToStr	32	static
+../Core/Src/aht10.c:49:6:ftoa	48	static
+../Core/Src/aht10.c:62:6:write_trigger	24	static
+../Core/Src/aht10.c:69:6:read_data	24	static
+../Core/Src/aht10.c:74:11:aht10_read_data	56	static
