@@ -35,7 +35,7 @@ static const char *TAG = "LORA";
 static spi_device_handle_t spi_handle;
 static int implicit;
 static long frequency;
-esp_mqtt_client_handle_t client; 
+extern esp_mqtt_client_handle_t client; 
 extern RTC_NOINIT_ATTR int alarm_flag;
 extern uint8_t topic_room_1_sensor[100];
 extern uint8_t topic_room_2_sensor[100];
@@ -384,8 +384,14 @@ void lora_task(void *param)
     mess_t mess_node_4;
     TickType_t tick_3 = 0;
     TickType_t tick_9 = 0;
+    TickType_t tick_5 = 0;
     char mqtt_mess[100] = {0};
     bool recv_flag = false;
+    bool skip_node_1 = false;
+    bool skip_node_2 = false;
+    bool skip_node_3 = false;
+    bool skip_node_4 = false;
+    bool conversion_done = false;
     lora_init();
     lora_set_frequency(433E6);
     lora_enable_crc();
@@ -408,7 +414,7 @@ void lora_task(void *param)
                     tick_3 = xTaskGetTickCount();
                     lora_send_packet((uint8_t*)request_mess, strlen(request_mess));
                     ESP_LOGI(TAG, "Send request %s", request_mess);
-                    while((xTaskGetTickCount() - tick_3 < 3000 / portTICK_RATE_MS))
+                    while((xTaskGetTickCount() - tick_3 < 2000 / portTICK_RATE_MS))
                     {
                         lora_receive();
                         if(lora_received())
@@ -436,10 +442,14 @@ void lora_task(void *param)
                     }
                 }
                 if(recv_flag == false)
+                {
                     ESP_LOGE(TAG, "Skip node_1");
+                    skip_node_1 = true;
+                }
                 else
                 {
                     recv_flag = false;
+                    skip_node_1 = false;
                     // while(xTaskGetTickCount() - tick_3 < 3000 / portTICK_RATE_MS);
                 }
                 node_id = NODE_2;  
@@ -452,7 +462,7 @@ void lora_task(void *param)
                     tick_3 = xTaskGetTickCount();
                     lora_send_packet((uint8_t*)request_mess, strlen(request_mess));
                     ESP_LOGI(TAG, "Send request %s", request_mess);
-                    while((xTaskGetTickCount() - tick_3 < 3000 / portTICK_RATE_MS))
+                    while((xTaskGetTickCount() - tick_3 < 2000 / portTICK_RATE_MS))
                     {
                         lora_receive();
                         if(lora_received())
@@ -480,9 +490,13 @@ void lora_task(void *param)
                     }
                 }
                 if(recv_flag == false)
+                {
                     ESP_LOGE(TAG, "Skip node_2");
+                    skip_node_2 = true;
+                }
                 else
                 {
+                    skip_node_2 = false;
                     recv_flag = false;
                     // while(xTaskGetTickCount() - tick_3 < 3000 / portTICK_RATE_MS);
                 }
@@ -496,7 +510,7 @@ void lora_task(void *param)
                     tick_3 = xTaskGetTickCount();
                     lora_send_packet((uint8_t*)request_mess, strlen(request_mess));
                     ESP_LOGI(TAG, "Send request %s", request_mess);
-                    while((xTaskGetTickCount() - tick_3 < 3000 / portTICK_RATE_MS))
+                    while((xTaskGetTickCount() - tick_3 < 2000 / portTICK_RATE_MS))
                     {
                         lora_receive();
                         if(lora_received())
@@ -524,9 +538,13 @@ void lora_task(void *param)
                     }
                 }
                 if(recv_flag == false)
+                {
                     ESP_LOGE(TAG, "Skip node_3");
+                    skip_node_3 = true;
+                }
                 else
                 {
+                    skip_node_3 = false;
                     recv_flag = false;
                     // while(xTaskGetTickCount() - tick_3 < 3000 / portTICK_RATE_MS);
                 }
@@ -540,7 +558,7 @@ void lora_task(void *param)
                     tick_3 = xTaskGetTickCount();
                     lora_send_packet((uint8_t*)request_mess, strlen(request_mess));
                     ESP_LOGI(TAG, "Send request %s", request_mess);
-                    while((xTaskGetTickCount() - tick_3 < 3000 / portTICK_RATE_MS))
+                    while((xTaskGetTickCount() - tick_3 < 2000 / portTICK_RATE_MS))
                     {
                         lora_receive();
                         if(lora_received())
@@ -568,35 +586,51 @@ void lora_task(void *param)
                     }
                 }
                 if(recv_flag == false)
+                {
                     ESP_LOGE(TAG, "Skip node_4");
+                    skip_node_4 = true;
+                }
                 else
                 {
+                    skip_node_4 = false;
                     recv_flag = false;
                     // while(xTaskGetTickCount() - tick_3 < 3000 / portTICK_RATE_MS);
                 }
+                conversion_done = true;
                 node_id = NODE_1;  
                 break;
             default:
                 break;
         }
 
-        if(status == NORMAL_MODE)
+        if(status == NORMAL_MODE && conversion_done == true && xTaskGetTickCount() - tick_5 > 5000 / portTICK_RATE_MS)
         {
-            // sprintf(mqtt_mes, "{\"co2\":%s,\"tvoc\":%s,\"alarm\":\"%s\",\"temp\":%s,\"hum\":%s"},mess_node_1.co2, mess_node_1.tvoc, mess_node_1.alarm_status, mess_node_1.temp, mess_node_1.hum);
-            sprintf(mqtt_mess, "{\"alarm\":\"%s\",\"temp\":%s,\"hum\":%s}", mess_node_1.mq7_status, mess_node_1.temp, mess_node_1.hum);
-            esp_mqtt_client_publish(client, (char*)topic_room_1_sensor, mqtt_mess, strlen(mqtt_mess), 0, 0);
-
-            // sprintf(mqtt_mes, "{\"co2\":%s,\"tvoc\":%s,\"alarm\":\"%s\",\"temp\":%s,\"hum\":%s"},mess_node_2.co2, mess_node_2.tvoc, mess_node_2.alarm_status, mess_node_2.temp, mess_node_2.hum);
-            sprintf(mqtt_mess, "{\"alarm\":\"%s\",\"temp\":%s,\"hum\":%s}", mess_node_2.mq7_status, mess_node_2.temp, mess_node_2.hum);
-            esp_mqtt_client_publish(client, (char*)topic_room_2_sensor, mqtt_mess, strlen(mqtt_mess), 0, 0);
-
-            // sprintf(mqtt_mes, "{\"co2\":%s,\"tvoc\":%s,\"alarm\":\"%s\",\"temp\":%s,\"hum\":%s"},mess_node_3.co2, mess_node_3.tvoc, mess_node_3.alarm_status, mess_node_3.temp, mess_node_3.hum);
-            sprintf(mqtt_mess, "{\"alarm\":\"%s\",\"temp\":%s,\"hum\":%s}", mess_node_3.mq7_status, mess_node_3.temp, mess_node_3.hum);
-            esp_mqtt_client_publish(client, (char*)topic_room_3_sensor, mqtt_mess, strlen(mqtt_mess), 0, 0);
-
-            // sprintf(mqtt_mes, "{\"co2\":%s,\"tvoc\":%s,\"alarm\":\"%s\",\"temp\":%s,\"hum\":%s"},mess_node_4.co2, mess_node_4.tvoc, mess_node_4.alarm_status, mess_node_4.temp, mess_node_4.hum);
-            sprintf(mqtt_mess, "{\"alarm\":\"%s\",\"temp\":%s,\"hum\":%s}", mess_node_4.mq7_status, mess_node_4.temp, mess_node_4.hum);
-            esp_mqtt_client_publish(client, (char*)topic_room_4_sensor, mqtt_mess, strlen(mqtt_mess), 0, 0);
+            tick_5 = xTaskGetTickCount();
+            if(skip_node_1 == false)
+            {
+                // sprintf(mqtt_mes, "{\"co2\":%s,\"tvoc\":%s,\"alarm\":\"%s\",\"temp\":%s,\"hum\":%s"},mess_node_1.co2, mess_node_1.tvoc, mess_node_1.alarm_status, mess_node_1.temp, mess_node_1.hum);
+                sprintf(mqtt_mess, "{\"alarm\":\"%s\",\"temp\":%s,\"hum\":%s}", mess_node_1.mq7_status, mess_node_1.temp, mess_node_1.hum);
+                esp_mqtt_client_publish(client, (char*)topic_room_1_sensor, mqtt_mess, strlen(mqtt_mess), 0, 0);
+            }
+            if(skip_node_2 == false)
+            {
+                // sprintf(mqtt_mes, "{\"co2\":%s,\"tvoc\":%s,\"alarm\":\"%s\",\"temp\":%s,\"hum\":%s"},mess_node_2.co2, mess_node_2.tvoc, mess_node_2.alarm_status, mess_node_2.temp, mess_node_2.hum);
+                sprintf(mqtt_mess, "{\"alarm\":\"%s\",\"temp\":%s,\"hum\":%s}", mess_node_2.mq7_status, mess_node_2.temp, mess_node_2.hum);
+                esp_mqtt_client_publish(client, (char*)topic_room_2_sensor, mqtt_mess, strlen(mqtt_mess), 0, 0);
+            }
+            if(skip_node_3 == false)
+            {
+                // sprintf(mqtt_mes, "{\"co2\":%s,\"tvoc\":%s,\"alarm\":\"%s\",\"temp\":%s,\"hum\":%s"},mess_node_3.co2, mess_node_3.tvoc, mess_node_3.alarm_status, mess_node_3.temp, mess_node_3.hum);
+                sprintf(mqtt_mess, "{\"alarm\":\"%s\",\"temp\":%s,\"hum\":%s}", mess_node_3.mq7_status, mess_node_3.temp, mess_node_3.hum);
+                esp_mqtt_client_publish(client, (char*)topic_room_3_sensor, mqtt_mess, strlen(mqtt_mess), 0, 0);
+            }
+            if(skip_node_4 == false)
+            {
+                // sprintf(mqtt_mes, "{\"co2\":%s,\"tvoc\":%s,\"alarm\":\"%s\",\"temp\":%s,\"hum\":%s"},mess_node_4.co2, mess_node_4.tvoc, mess_node_4.alarm_status, mess_node_4.temp, mess_node_4.hum);
+                sprintf(mqtt_mess, "{\"alarm\":\"%s\",\"temp\":%s,\"hum\":%s}", mess_node_4.mq7_status, mess_node_4.temp, mess_node_4.hum);
+                esp_mqtt_client_publish(client, (char*)topic_room_4_sensor, mqtt_mess, strlen(mqtt_mess), 0, 0);
+            }
+            conversion_done = false;
         }
 
         if(strstr(mess_node_1.mq7_status, "on") != NULL \

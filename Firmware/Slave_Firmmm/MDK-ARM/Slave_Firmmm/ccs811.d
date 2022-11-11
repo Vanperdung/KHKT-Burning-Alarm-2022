@@ -1,4 +1,5 @@
-slave_firmmm/main.o: ..\Core\Src\main.c ..\Core\Inc\main.h \
+slave_firmmm/ccs811.o: ..\Core\Src\ccs811.c ..\Core\Inc\ccs811.h \
+  C:\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdint.h ..\Core\Inc\main.h \
   ..\Drivers\STM32G0xx_HAL_Driver\Inc\stm32g0xx_hal.h \
   ..\Core\Inc\stm32g0xx_hal_conf.h \
   ..\Drivers\STM32G0xx_HAL_Driver\Inc\stm32g0xx_hal_rcc.h \
@@ -6,7 +7,6 @@ slave_firmmm/main.o: ..\Core\Src\main.c ..\Core\Inc\main.h \
   ..\Drivers\CMSIS\Device\ST\STM32G0xx\Include\stm32g0xx.h \
   ..\Drivers\CMSIS\Device\ST\STM32G0xx\Include\stm32g030xx.h \
   ..\Drivers\CMSIS\Include\core_cm0plus.h \
-  C:\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdint.h \
   ..\Drivers\CMSIS\Include\cmsis_version.h \
   ..\Drivers\CMSIS\Include\cmsis_compiler.h \
   ..\Drivers\CMSIS\Include\cmsis_armclang.h \
@@ -37,6 +37,7 @@ slave_firmmm/main.o: ..\Core\Src\main.c ..\Core\Inc\main.h \
   ..\Drivers\STM32G0xx_HAL_Driver\Inc\stm32g0xx_hal_uart.h \
   ..\Drivers\STM32G0xx_HAL_Driver\Inc\stm32g0xx_hal_uart_ex.h \
   ..\Core\Inc\i2c.h ..\Core\Inc\spi.h ..\Core\Inc\usart.h \
-  ..\Core\Inc\gpio.h ..\Core\Inc\aht10.h ..\Core\Inc\lora.h \
-  C:\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdio.h ..\Core\Inc\ccs811.h \
+  ..\Core\Inc\gpio.h C:\Keil_v5\ARM\ARMCLANG\Bin\..\include\math.h \
+  C:\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdio.h \
+  C:\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdlib.h \
   C:\Keil_v5\ARM\ARMCLANG\Bin\..\include\string.h

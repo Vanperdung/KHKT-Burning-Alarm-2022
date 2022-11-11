@@ -53,6 +53,7 @@ uint8_t topic_room_4_sensor[100] = {0};
 uint8_t topic_fota[100] = {0};
 uint8_t topic_process[100] = {0};
 uint8_t topic_number[100] = {0};
+uint8_t topic_message[100] = {0};
 
 void app_main(void)
 {

@@ -64,6 +64,8 @@ void led_task(void *param)
         switch(status)
         {
             case LOCAL_MODE:
+                gpio_set_level(LED_STATUS_PIN, LED_ON);
+                vTaskDelay(100 / portTICK_RATE_MS);
                 gpio_set_level(LED_STATUS_PIN, LED_OFF);
                 vTaskDelay(100 / portTICK_RATE_MS);
                 break;

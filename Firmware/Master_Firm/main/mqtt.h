@@ -9,6 +9,7 @@
 #define TOPIC_FOTA          "mandevices/fota"
 #define TOPIC_PROCESS       "mandevices/process"
 #define TOPIC_NUMBER        "mandevices/number"
+#define TOPIC_MESSAGE       "mandevices/message"
 
 void mqtt_client_sta(void);
 

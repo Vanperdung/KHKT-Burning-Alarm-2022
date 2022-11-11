@@ -9,6 +9,7 @@
 "slave_firmmm\usart.o"
 "slave_firmmm\stm32g0xx_it.o"
 "slave_firmmm\stm32g0xx_hal_msp.o"
+"slave_firmmm\ccs811.o"
 "slave_firmmm\stm32g0xx_hal_i2c.o"
 "slave_firmmm\stm32g0xx_hal_i2c_ex.o"
 "slave_firmmm\stm32g0xx_hal_rcc.o"

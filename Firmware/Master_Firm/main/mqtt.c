@@ -50,6 +50,7 @@ extern uint8_t topic_room_4_sensor[100];
 extern uint8_t topic_fota[100];
 extern uint8_t topic_process[100];
 extern uint8_t topic_number[100];
+extern uint8_t topic_message[100];
 RingbufHandle_t mqtt_ring_buf;
 esp_mqtt_client_handle_t client;  
 
@@ -64,6 +65,7 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
             ESP_LOGI(TAG, "MQTT event connected");
             esp_mqtt_client_subscribe(client, (char*)topic_fota, 0);
             esp_mqtt_client_subscribe(client, (char*)topic_number, 0);
+            esp_mqtt_client_subscribe(client, (char*)topic_message, 0);
             break;
         case MQTT_EVENT_DISCONNECTED:
             ESP_LOGI(TAG, "MQTT event disconnected");
@@ -108,6 +110,8 @@ static void process_message_json(char *mess, _message_object *mess_obj)
                 memcpy(mess_obj->url, current_obj->valuestring, strlen(current_obj->valuestring) + 1);
             if(strcmp(str, "number") == 0)
                 memcpy(mess_obj->number, current_obj->valuestring, strlen(current_obj->valuestring) + 1);
+            if(strcmp(str, "message") == 0)
+                memcpy(mess_obj->message, current_obj->valuestring, strlen(current_obj->valuestring) + 1);
         }
     }
     cJSON_Delete(root);
@@ -155,7 +159,9 @@ static void mqtt_task(void *param)
                         write_to_file("message.txt", mess_obj.message);
                     }
                 }
+                vRingbufferReturnItem(mqtt_ring_buf, (void*)mess_recv);
             }
+
         }
     }
 }
@@ -173,6 +179,7 @@ void mqtt_client_sta(void)
     strcpy((char*)topic_fota, TOPIC_FOTA);
     strcpy((char*)topic_process, TOPIC_PROCESS);
     strcpy((char*)topic_number, TOPIC_NUMBER);
+    strcpy((char*)topic_message, TOPIC_MESSAGE);
     mqtt_ring_buf = xRingbufferCreate(4096, RINGBUF_TYPE_NOSPLIT);
     if(mqtt_ring_buf == NULL)
         ESP_LOGE(TAG, "Failed to create ring buffer");
