@@ -129,9 +129,10 @@ ccs811_alg_result_data_t ccs811_get_data(void)
 {
     ccs811_alg_result_data_t result_data;
     uint8_t data[8] = {0};
-    ccs811_read_data(ALG_RESULT_DATA_REG, (char *)data, 4);
+    ccs811_read_data(ALG_RESULT_DATA_REG, (char *)data, 8);
     result_data.eCO2 = (((uint16_t)data[0] << 8) & 0xff00) | ((uint16_t)data[1] & 0x00ff);
     result_data.tvoc = (((uint16_t)data[2] << 8) & 0xff00) | ((uint16_t)data[3] & 0x00ff);
+    result_data.status = data[4];
     return result_data;
 }
 

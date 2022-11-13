@@ -62,6 +62,8 @@ typedef struct
 	char temp[10];
 	char hum[10];
 	char mq7_status[5];
+	char eCO2[10];
+	char tvoc[10];
 } mess_t;
 char *node_id[10] = {"node_1", "node_2", "node_3", "node_4"};
 /* USER CODE END PV */
@@ -161,58 +163,66 @@ int main(void)
 		/* USER CODE END WHILE */
 
 		/* USER CODE BEGIN 3 */
-		//     if(HAL_GetTick() - tick > 5000 || tick == 0)
-		//     {
-		//       tick = HAL_GetTick();
-		//       aht10_read_data(mess.temp, mess.hum);
-		//     }
-		// 		if(HAL_GPIO_ReadPin(GPIOB, MQ7_DIGIT_Pin) == GPIO_PIN_RESET || strstr(mess.alarm_status, "on") != NULL)
-		// 			switch_relay(GPIO_PIN_SET);
-		// 		else
-		// 			switch_relay(GPIO_PIN_RESET);
-
-		// 		if(HAL_GPIO_ReadPin(GPIOB, MQ7_DIGIT_Pin) == GPIO_PIN_RESET)
-		// 			sprintf(mess.mq7_status, "on");
-		// 		else
-		// 			sprintf(mess.mq7_status, "off");
-
-		//     uint8_t ret = lora_prasePacket(&lora);
-		//     if(ret)
-		//     {
-		//       uint8_t i = 0;
-		//       while(lora_available(&lora))
-		//       {
-		//         data_recv[i] = lora_read(&lora);
-		//         i++;
-		//       }
-		//       data_recv[i] = '\0';
-		//       sprintf(msg, "Receive: %s\r\n", data_recv);
-		//       debug(msg);
-		//       if(data_recv[0] == '$')
-		//       {
-		//         sscanf(data_recv, "$,%[^,],%[^,],%[^,],*", mess.nodeID, mess.type, alarm_status_test);
-		//         if(strstr(mess.nodeID, node_id[NODE_ID]) != NULL && strstr(mess.type, "request") != NULL)
-		//         {
-		// 					strcpy(mess.alarm_status, alarm_status_test);
-		//           sprintf(msg, "Send request: ");
-		//           debug(msg);
-		//           lora_begin_packet(&lora);
-		//           sprintf(data_send, "$,%s,response,%s,%s,%s,*\r\n", mess.nodeID, mess.temp, mess.hum, mess.mq7_status);
-		//           lora_tx(&lora, (uint8_t *)data_send, strlen(data_send));
-		//           lora_end_packet(&lora);
-		//           debug(data_send);
-		//         }
-		//       }
-		//     }
-		//     else
-		//       HAL_Delay(10);
-		if (ccs811_get_status() & 0x08)
+		if (HAL_GetTick() - tick > 5000 || tick == 0)
 		{
-			alg_results_data = ccs811_get_data();
-			sprintf(msg, "eCO2: %d, tvoc: %d\r\n", (uint32_t)alg_results_data.eCO2, (uint32_t)alg_results_data.tvoc);
-			debug(msg);
-			HAL_Delay(1000);
+			tick = HAL_GetTick();
+			aht10_read_data(mess.temp, mess.hum);
+			if (ccs811_get_status() & 0x08)
+			{
+				alg_results_data = ccs811_get_data();
+				if(alg_results_data.eCO2 > 8192)
+					alg_results_data.eCO2 = 8192;
+				if(alg_results_data.tvoc > 1187)
+					alg_results_data.tvoc = 1187;
+				sprintf(mess.eCO2, "%d", alg_results_data.eCO2);
+				sprintf(mess.tvoc, "%d", alg_results_data.tvoc);
+				// if (alg_results_data.error == 0x00)
+				// {
+				// 	sprintf(msg, "eCO2: %d, tvoc: %d, error %02x\r\n", (uint32_t)alg_results_data.eCO2, (uint32_t)alg_results_data.tvoc, alg_results_data.error);
+				// 	debug(msg);
+				// }
+			}
 		}
+		if ((HAL_GPIO_ReadPin(GPIOB, MQ7_DIGIT_Pin) == GPIO_PIN_RESET && (strcmp(mess.eCO2, "8192") == 0) && (strcmp(mess.tvoc, "1187") == 0)) || strstr(mess.alarm_status, "on") != NULL)
+			switch_relay(GPIO_PIN_SET);
+		else
+			switch_relay(GPIO_PIN_RESET);
+
+		if (HAL_GPIO_ReadPin(GPIOB, MQ7_DIGIT_Pin) == GPIO_PIN_RESET && (strcmp(mess.eCO2, "8192") == 0) && (strcmp(mess.tvoc, "1187") == 0))
+			sprintf(mess.mq7_status, "on");
+		else
+			sprintf(mess.mq7_status, "off");
+
+		uint8_t ret = lora_prasePacket(&lora);
+		if (ret)
+		{
+			uint8_t i = 0;
+			while (lora_available(&lora))
+			{
+				data_recv[i] = lora_read(&lora);
+				i++;
+			}
+			data_recv[i] = '\0';
+			sprintf(msg, "Receive: %s\r\n", data_recv);
+			debug(msg);
+			if (data_recv[0] == '$')
+			{
+				sscanf(data_recv, "$,%[^,],%[^,],%[^,],*", mess.nodeID, mess.type, alarm_status_test);
+				if (strstr(mess.nodeID, node_id[NODE_ID]) != NULL && strstr(mess.type, "request") != NULL)
+				{
+					strcpy(mess.alarm_status, alarm_status_test);
+					sprintf(msg, "Send request: ");
+					debug(msg);
+					lora_begin_packet(&lora);
+					sprintf(data_send, "$,%s,response,%s,%s,%s,%s,%s*\r\n", mess.nodeID, mess.temp, mess.hum, mess.mq7_status, mess.eCO2, mess.tvoc);
+					lora_tx(&lora, (uint8_t *)data_send, strlen(data_send));
+					lora_end_packet(&lora);
+					debug(data_send);
+				}
+			}
+		}
+		else
+			HAL_Delay(10);
 	}
 	/* USER CODE END 3 */
 }

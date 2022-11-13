@@ -43,7 +43,7 @@ typedef struct
 {
     uint16_t eCO2;
     uint16_t tvoc;
-    ccs811_status_t status;
+    uint8_t status;
     uint8_t error;
     ccs811_raw_data_t raw_data;
 } ccs811_alg_result_data_t;
