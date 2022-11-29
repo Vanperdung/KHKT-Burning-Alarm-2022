@@ -44,8 +44,7 @@ static void uart_init(void)
         .data_bits = UART_DATA_8_BITS,
         .parity = UART_PARITY_DISABLE,
         .stop_bits = UART_STOP_BITS_1,
-        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE
-    };
+        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE};
     uart_driver_install(UART_NUM_2, 1024, 2048, 0, NULL, 0);
     uart_param_config(UART_NUM_2, &uart_cfg);
     uart_set_pin(UART_NUM_2, SIM_TXD_PIN, SIM_RXD_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
@@ -57,9 +56,8 @@ static void gpio_sim_init(void)
         .intr_type = GPIO_INTR_DISABLE,
         .mode = GPIO_MODE_OUTPUT,
         .pull_down_en = 0,
-        .pull_up_en = 0, 
-        .pin_bit_mask = (1ULL << SIM_PWRKEY_PIN)
-    };
+        .pull_up_en = 0,
+        .pin_bit_mask = (1ULL << SIM_PWRKEY_PIN)};
     gpio_config(&pwrkey_cfg);
     gpio_set_level(SIM_PWRKEY_PIN, 1);
 
@@ -67,9 +65,8 @@ static void gpio_sim_init(void)
         .intr_type = GPIO_INTR_DISABLE,
         .mode = GPIO_MODE_INPUT,
         .pull_down_en = 0,
-        .pull_up_en = 0, 
-        .pin_bit_mask = (1ULL << SIM_STATUS_PIN)
-    };
+        .pull_up_en = 0,
+        .pin_bit_mask = (1ULL << SIM_STATUS_PIN)};
     gpio_config(&status_cfg);
 }
 
@@ -78,10 +75,10 @@ static bool read_sim_response(char *sim_mess_rx, char *check_response, int time_
     TickType_t pre_tick = xTaskGetTickCount();
     int cur_len, pre_len = 0;
     uart_flush(UART_NUM_2);
-    while(!(xTaskGetTickCount() - pre_tick > (time_delay / portTICK_RATE_MS)))
+    while (!(xTaskGetTickCount() - pre_tick > (time_delay / portTICK_RATE_MS)))
     {
-        uart_get_buffered_data_len(UART_NUM_2, (size_t*)&cur_len);
-        if(cur_len > pre_len)
+        uart_get_buffered_data_len(UART_NUM_2, (size_t *)&cur_len);
+        if (cur_len > pre_len)
         {
             pre_tick = xTaskGetTickCount();
             pre_len = cur_len;
@@ -89,12 +86,12 @@ static bool read_sim_response(char *sim_mess_rx, char *check_response, int time_
         vTaskDelay(10 / portTICK_RATE_MS);
     }
     uart_read_bytes(UART_NUM_2, sim_mess_rx, cur_len, 20 / portTICK_RATE_MS);
-    ESP_LOGI(TAG, "Sim response: %s", sim_mess_rx);
-    if(check_response)
+    // ESP_LOGI(TAG, "Sim response: %s", sim_mess_rx);
+    if (check_response)
     {
-        if(strstr(sim_mess_rx, check_response) != NULL)
+        if (strstr(sim_mess_rx, check_response) != NULL)
             return true;
-        else 
+        else
             return false;
     }
     else
@@ -105,8 +102,8 @@ esp_err_t sim_init(void)
 {
     // char sim_mess_tx[100] = {0};
     char sim_mess_rx[100] = {0};
-    ESP_LOGI(TAG, "Sim init");
-    while(!gpio_get_level(SIM_STATUS_PIN))
+    // ESP_LOGI(TAG, "Sim init");
+    while (!gpio_get_level(SIM_STATUS_PIN))
     {
         gpio_set_level(SIM_PWRKEY_PIN, 1);
         vTaskDelay(50 / portTICK_RATE_MS);
@@ -114,30 +111,30 @@ esp_err_t sim_init(void)
     gpio_set_level(SIM_PWRKEY_PIN, 0);
 
     uart_write_bytes(UART_NUM_2, "ATE0\r\n", strlen("ATE0\r\n"));
-    if(!read_sim_response(sim_mess_rx, "OK", 100))
+    if (!read_sim_response(sim_mess_rx, "OK", 100))
     {
-        ESP_LOGI(TAG, "Sim got error");
+        // ESP_LOGI(TAG, "Sim got error");
         return ESP_FAIL;
     }
 
     uart_write_bytes(UART_NUM_2, "AT\r\n", strlen("AT\r\n"));
-    if(!read_sim_response(sim_mess_rx, "OK", 100))
+    if (!read_sim_response(sim_mess_rx, "OK", 100))
     {
-        ESP_LOGI(TAG, "Sim got error");
+        // ESP_LOGI(TAG, "Sim got error");
         return ESP_FAIL;
     }
 
     uart_write_bytes(UART_NUM_2, "AT+CPIN?\r\n", strlen("AT+CPIN?\r\n"));
-    if(!read_sim_response(sim_mess_rx, "OK", 100))
+    if (!read_sim_response(sim_mess_rx, "OK", 100))
     {
-        ESP_LOGI(TAG, "Sim got error");
+        // ESP_LOGI(TAG, "Sim got error");
         return ESP_FAIL;
     }
 
     uart_write_bytes(UART_NUM_2, "AT+COPS?\r\n", strlen("AT+COPS?\r\n"));
-    if(!read_sim_response(sim_mess_rx, "OK", 100))
+    if (!read_sim_response(sim_mess_rx, "OK", 100))
     {
-        ESP_LOGI(TAG, "Sim got error");
+        // ESP_LOGI(TAG, "Sim got error");
         return ESP_FAIL;
     }
     return ESP_OK;
@@ -151,33 +148,45 @@ esp_err_t send_message(char *sim_mess, char *number)
     sprintf(at_send_mess, "AT+CMGS=\"%s\"\r\n", number);
 
     uart_write_bytes(UART_NUM_2, "AT+CMGF=1\r\n\r\n", strlen("AT+CMGF=1\r\n"));
-    if(!read_sim_response(sim_mess_rx, "OK", 2000))
+    if (!read_sim_response(sim_mess_rx, "OK", 2000))
     {
-        ESP_LOGI(TAG, "Sim got error");
+        // ESP_LOGI(TAG, "Sim got error");
         return ESP_FAIL;
     }
 
     uart_write_bytes(UART_NUM_2, at_send_mess, strlen(at_send_mess));
-    if(!read_sim_response(sim_mess_rx, ">", 200))
+    if (!read_sim_response(sim_mess_rx, ">", 200))
     {
-        ESP_LOGI(TAG, "Sim got error");
+        // ESP_LOGI(TAG, "Sim got error");
         return ESP_FAIL;
     }
 
     uart_write_bytes(UART_NUM_2, sim_mess, strlen(sim_mess));
-    if(!read_sim_response(sim_mess_rx, NULL, 200))
+    if (!read_sim_response(sim_mess_rx, NULL, 200))
     {
-        ESP_LOGI(TAG, "Sim got error");
+        // ESP_LOGI(TAG, "Sim got error");
         return ESP_FAIL;
     }
 
     uart_write_bytes(UART_NUM_2, end_mess, strlen(end_mess));
-    if(!read_sim_response(sim_mess_rx, NULL, 200))
+    if (!read_sim_response(sim_mess_rx, NULL, 200))
     {
-        ESP_LOGI(TAG, "Sim got error");
+        // ESP_LOGI(TAG, "Sim got error");
         return ESP_FAIL;
     }
     return ESP_OK;
+}
+
+void call_phone(char *number)
+{
+    char at_send_mess[100] = {0};
+    char sim_mess_rx[100] = {0};
+    sprintf(at_send_mess, "ATD%s;\r\n", number);
+    uart_write_bytes(UART_NUM_2, at_send_mess, strlen(at_send_mess));
+    if (!read_sim_response(sim_mess_rx, NULL, 200))
+    {
+        // ESP_LOGI(TAG, "Sim got error");
+    }
 }
 
 void sim_task(void *param)
@@ -190,17 +199,22 @@ void sim_task(void *param)
     do
     {
         ret = sim_init();
-    } while(ret != ESP_OK);
+    } while (ret != ESP_OK);
     ESP_LOGI(TAG, "Sim init done");
     vTaskDelay(2000 / portTICK_RATE_MS);
-    while(1)
+    while (1)
     {
-        if(send_sms_alarm_flag == false && alarm_flag == ENABLE_ALARM)
+        if (send_sms_alarm_flag == false && alarm_flag == ENABLE_ALARM)
         {
             read_from_file("number.txt", number);
             read_from_file("message.txt", message);
-            if(strlen(number) > 0 && strlen(message) > 0)
+            if (strlen(number) > 0 && strlen(message) > 0)
+            {
                 send_message(message, number);
+                vTaskDelay(2000 / portTICK_PERIOD_MS);
+                call_phone(number);
+                vTaskDelay(10000 / portTICK_RATE_MS);
+            }
             else
                 ESP_LOGE(TAG, "Read number or message fail");
             send_sms_alarm_flag = true;

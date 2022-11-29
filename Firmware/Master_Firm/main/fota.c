@@ -42,10 +42,10 @@
 #include "main.h"
 
 static const char *TAG = "FOTA";
-extern _status status; 
+extern _status status;
 extern const uint8_t github_cert_pem_start[] asm("_binary_git_ota_pem_start");
 extern const uint8_t github_cert_pem_end[] asm("_binary_git_ota_pem_end");
-extern esp_mqtt_client_handle_t client;  
+extern esp_mqtt_client_handle_t client;
 extern uint8_t topic_sensor[100];
 extern uint8_t topic_fota[100];
 extern uint8_t topic_process[100];
@@ -53,7 +53,7 @@ extern uint8_t topic_number[100];
 
 esp_err_t ota_event_handler(esp_http_client_event_t *evt)
 {
-    switch (evt->event_id) 
+    switch (evt->event_id)
     {
     case HTTP_EVENT_ERROR:
         ESP_LOGD(TAG, "HTTP_EVENT_ERROR");
@@ -83,24 +83,23 @@ esp_err_t ota_event_handler(esp_http_client_event_t *evt)
 void fota_task(void *param)
 {
     char ota_url[100] = {0};
-    strcpy(ota_url, (char*)param);
+    strcpy(ota_url, (char *)param);
     ESP_LOGI(TAG, "FOTA start, url: %s", ota_url);
     status = FOTA;
     esp_http_client_config_t ota_cfg = {
         .url = ota_url,
         .event_handler = ota_event_handler,
         .keep_alive_enable = true,
-        .cert_pem = (char*)github_cert_pem_start
-    };
+        .cert_pem = (char *)github_cert_pem_start};
     esp_err_t ret = esp_https_ota(&ota_cfg);
-    if(ret == ESP_OK) 
+    if (ret == ESP_OK)
     {
         ESP_LOGI(TAG, "OTA done, restarting...");
-        esp_mqtt_client_publish(client, (char*)topic_process, "{\"process\":\"Fota done\"}", strlen("{\"process\":\"Fota done\"}"), 0, 0);
+        esp_mqtt_client_publish(client, (char *)topic_process, "{\"process\":\"Fota done\"}", strlen("{\"process\":\"Fota done\"}"), 0, 0);
         vTaskDelay(1000 / portTICK_RATE_MS);
         esp_restart();
-    } 
-    else 
+    }
+    else
     {
         ESP_LOGE(TAG, "OTA failed...");
     }

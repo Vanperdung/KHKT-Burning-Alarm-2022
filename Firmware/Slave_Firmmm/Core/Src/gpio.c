@@ -47,19 +47,12 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOF_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
-  __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, LORA_RST_Pin|LORA_NSS_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(CCS_WAKE_GPIO_Port, CCS_WAKE_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(CCS_RST_GPIO_Port, CCS_RST_Pin, GPIO_PIN_SET);
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, RL1_Pin|RL3_Pin|RL2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, CAM_IO_Pin|RL1_Pin|RL3_Pin|RL2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : PAPin PAPin */
   GPIO_InitStruct.Pin = LORA_RST_Pin|LORA_NSS_Pin;
@@ -75,28 +68,18 @@ void MX_GPIO_Init(void)
   HAL_GPIO_Init(MQ7_DIGIT_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PtPin */
-  GPIO_InitStruct.Pin = CCS_WAKE_Pin;
+  GPIO_InitStruct.Pin = CAM_IO_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  HAL_GPIO_Init(CCS_WAKE_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(CAM_IO_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PtPin */
-  GPIO_InitStruct.Pin = CCS_INT_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(CCS_INT_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : PBPin PBPin PBPin PBPin */
-  GPIO_InitStruct.Pin = CCS_RST_Pin|RL1_Pin|RL3_Pin|RL2_Pin;
+  /*Configure GPIO pins : PBPin PBPin PBPin */
+  GPIO_InitStruct.Pin = RL1_Pin|RL3_Pin|RL2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI2_3_IRQn, 1, 0);
-  HAL_NVIC_EnableIRQ(EXTI2_3_IRQn);
 
 }
 

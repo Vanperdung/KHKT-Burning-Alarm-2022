@@ -31,6 +31,7 @@
 #include "ccs811.h"
 #include <stdint.h>
 #include <string.h>
+#include <stdbool.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -40,7 +41,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define NODE_ID 3
+#define NODE_ID 1
 
 /* USER CODE END PD */
 
@@ -102,6 +103,9 @@ int main(void)
 	char msg[64] = {0};
 	uint32_t tick = 0;
 	uint32_t tick_2 = 0;
+	int count = 0;
+	bool alarm_flag = false;
+	bool skip_request_off = false;
 	mess_t mess;
 	char alarm_status_test[5] = {0};
 	uint8_t ccs811_ret;
@@ -163,16 +167,32 @@ int main(void)
 		/* USER CODE END WHILE */
 
 		/* USER CODE BEGIN 3 */
-		if (HAL_GetTick() - tick > 5000 || tick == 0)
+		if (strstr(mess.alarm_status, "on") != NULL)
+		{
+			HAL_GPIO_WritePin(GPIOB, RL1_Pin, GPIO_PIN_SET);
+		}
+		else if (strstr(mess.alarm_status, "off") != NULL)
+		{
+			switch_relay(GPIO_PIN_RESET);
+			if(alarm_flag == true)
+			{
+				alarm_flag = false;
+				count = 0;
+			}
+		}
+
+		if (HAL_GetTick() - tick > 2000 || tick == 0)
 		{
 			tick = HAL_GetTick();
 			aht10_read_data(mess.temp, mess.hum);
+			HAL_Delay(100);
+
 			if (ccs811_get_status() & 0x08)
 			{
 				alg_results_data = ccs811_get_data();
-				if(alg_results_data.eCO2 > 8192)
+				if (alg_results_data.eCO2 > 8192)
 					alg_results_data.eCO2 = 8192;
-				if(alg_results_data.tvoc > 1187)
+				if (alg_results_data.tvoc > 1187)
 					alg_results_data.tvoc = 1187;
 				sprintf(mess.eCO2, "%d", alg_results_data.eCO2);
 				sprintf(mess.tvoc, "%d", alg_results_data.tvoc);
@@ -181,17 +201,41 @@ int main(void)
 				// 	sprintf(msg, "eCO2: %d, tvoc: %d, error %02x\r\n", (uint32_t)alg_results_data.eCO2, (uint32_t)alg_results_data.tvoc, alg_results_data.error);
 				// 	debug(msg);
 				// }
+				if (alg_results_data.eCO2 >= 5000 && alg_results_data.tvoc >= 1000)
+				{
+					if (count < 3)
+					{
+						if(count == 2)
+						{
+							skip_request_off = true;
+							strcpy(mess.alarm_status, "on");
+						}
+						count++;
+					}
+					if (count == 3)
+					{
+						alarm_flag = true;
+					}
+				}
+				else if(alarm_flag == false)
+				{
+					count = 0;
+				}
 			}
 		}
-		if ((HAL_GPIO_ReadPin(GPIOB, MQ7_DIGIT_Pin) == GPIO_PIN_RESET && (strcmp(mess.eCO2, "8192") == 0) && (strcmp(mess.tvoc, "1187") == 0)) || strstr(mess.alarm_status, "on") != NULL)
-			switch_relay(GPIO_PIN_SET);
-		else
-			switch_relay(GPIO_PIN_RESET);
-
-		if (HAL_GPIO_ReadPin(GPIOB, MQ7_DIGIT_Pin) == GPIO_PIN_RESET && (strcmp(mess.eCO2, "8192") == 0) && (strcmp(mess.tvoc, "1187") == 0))
+		
+		if (alarm_flag == true)
+		{
 			sprintf(mess.mq7_status, "on");
+			switch_relay(GPIO_PIN_SET);
+			// HAL_GPIO_WritePin(GPIOB, RL1_Pin, GPIO_PIN_SET);
+		}
 		else
+		{
 			sprintf(mess.mq7_status, "off");
+			// switch_relay(GPIO_PIN_RESET);
+			// HAL_GPIO_WritePin(GPIOB, RL1_Pin, GPIO_PIN_RESET);
+		}
 
 		uint8_t ret = lora_prasePacket(&lora);
 		if (ret)
@@ -210,11 +254,19 @@ int main(void)
 				sscanf(data_recv, "$,%[^,],%[^,],%[^,],*", mess.nodeID, mess.type, alarm_status_test);
 				if (strstr(mess.nodeID, node_id[NODE_ID]) != NULL && strstr(mess.type, "request") != NULL)
 				{
-					strcpy(mess.alarm_status, alarm_status_test);
+					if(skip_request_off == true)
+					{
+						strcpy(mess.alarm_status, "on");
+						skip_request_off = false;
+					}
+					else
+					{
+						strcpy(mess.alarm_status, alarm_status_test);
+					}
 					sprintf(msg, "Send request: ");
 					debug(msg);
 					lora_begin_packet(&lora);
-					sprintf(data_send, "$,%s,response,%s,%s,%s,%s,%s*\r\n", mess.nodeID, mess.temp, mess.hum, mess.mq7_status, mess.eCO2, mess.tvoc);
+					sprintf(data_send, "$,%s,response,%s,%s,%s,%s,%s,*\r\n", mess.nodeID, mess.temp, mess.hum, mess.mq7_status, mess.eCO2, mess.tvoc);
 					lora_tx(&lora, (uint8_t *)data_send, strlen(data_send));
 					lora_end_packet(&lora);
 					debug(data_send);

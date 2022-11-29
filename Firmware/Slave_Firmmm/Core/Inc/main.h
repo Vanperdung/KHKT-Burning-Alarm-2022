@@ -70,13 +70,8 @@ void Error_Handler(void);
 #define LORA_MOSI_GPIO_Port GPIOA
 #define MQ7_DIGIT_Pin GPIO_PIN_1
 #define MQ7_DIGIT_GPIO_Port GPIOB
-#define CCS_WAKE_Pin GPIO_PIN_0
-#define CCS_WAKE_GPIO_Port GPIOD
-#define CCS_INT_Pin GPIO_PIN_2
-#define CCS_INT_GPIO_Port GPIOD
-#define CCS_INT_EXTI_IRQn EXTI2_3_IRQn
-#define CCS_RST_Pin GPIO_PIN_3
-#define CCS_RST_GPIO_Port GPIOB
+#define CAM_IO_Pin GPIO_PIN_3
+#define CAM_IO_GPIO_Port GPIOB
 #define RL1_Pin GPIO_PIN_7
 #define RL1_GPIO_Port GPIOB
 #define RL3_Pin GPIO_PIN_8

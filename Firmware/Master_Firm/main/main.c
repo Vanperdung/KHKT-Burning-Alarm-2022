@@ -45,7 +45,7 @@
 static const char *TAG = "MAIN";
 RTC_NOINIT_ATTR int smartconfig_flag;
 RTC_NOINIT_ATTR int alarm_flag;
-_status status;    
+_status status;
 uint8_t topic_room_1_sensor[100] = {0};
 uint8_t topic_room_2_sensor[100] = {0};
 uint8_t topic_room_3_sensor[100] = {0};
@@ -57,7 +57,7 @@ uint8_t topic_message[100] = {0};
 
 void app_main(void)
 {
-    ESP_ERROR_CHECK(nvs_flash_init());  
+    ESP_ERROR_CHECK(nvs_flash_init());
     status = LOCAL_MODE;
     char sim_number[20] = {0};
     xTaskCreate(&led_task, "led_status_task", 2048, NULL, 5, NULL);
@@ -66,7 +66,7 @@ void app_main(void)
     mount_SPIFFS();
     read_from_file("number.txt", sim_number);
     ESP_LOGI(TAG, "Sim number: %s", sim_number);
-    if(smartconfig_flag == ENABLE_SC)
+    if (smartconfig_flag == ENABLE_SC)
     {
         smartconfig_flag = DISABLE_SC;
         status = SMARTCONFIG;
@@ -80,16 +80,13 @@ void app_main(void)
             .sta = {
                 .threshold.authmode = WIFI_AUTH_WPA2_PSK,
                 .pmf_cfg = {
-					.capable = true,
-					.required = false
-				}
-            }
-        };
-        if(esp_wifi_get_config(ESP_IF_WIFI_STA, &wifi_cfg) == ESP_OK)
+                    .capable = true,
+                    .required = false}}};
+        if (esp_wifi_get_config(ESP_IF_WIFI_STA, &wifi_cfg) == ESP_OK)
         {
             ESP_LOGI(TAG, "Wifi configuration already stored in flash partition called NVS");
-            ESP_LOGI(TAG, "%s" ,wifi_cfg.sta.ssid);
-            ESP_LOGI(TAG, "%s" ,wifi_cfg.sta.password);
+            ESP_LOGI(TAG, "%s", wifi_cfg.sta.ssid);
+            ESP_LOGI(TAG, "%s", wifi_cfg.sta.password);
             wifi_sta(wifi_cfg, WIFI_MODE_STA);
             mqtt_client_sta();
         }
