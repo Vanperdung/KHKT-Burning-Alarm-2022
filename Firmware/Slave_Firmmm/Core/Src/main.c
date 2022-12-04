@@ -251,7 +251,7 @@ int main(void)
 			debug(msg);
 			if (data_recv[0] == '$')
 			{
-				sscanf(data_recv, "$,%[^,],%[^,],%[^,],*", mess.nodeID, mess.type, alarm_status_test);
+				(data_recv, "$,%[^,],%[^,],%[^,],*", mess.nodeID, mess.type, alarm_status_test);
 				if (strstr(mess.nodeID, node_id[NODE_ID]) != NULL && strstr(mess.type, "request") != NULL)
 				{
 					if(skip_request_off == true)
@@ -272,6 +272,7 @@ int main(void)
 					debug(data_send);
 				}
 			}
+
 		}
 		else
 			HAL_Delay(10);

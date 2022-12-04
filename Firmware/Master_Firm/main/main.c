@@ -24,6 +24,7 @@
 #include "mqtt_client.h"
 
 #include "driver/gpio.h"
+#include "driver/i2c.h"
 #include "driver/uart.h"
 #include "driver/spi_master.h"
 
@@ -41,6 +42,7 @@
 #include "wifi.h"
 #include "main.h"
 #include "spiffs_user.h"
+#include "lcd.h"
 
 static const char *TAG = "MAIN";
 RTC_NOINIT_ATTR int smartconfig_flag;
@@ -59,13 +61,11 @@ void app_main(void)
 {
     ESP_ERROR_CHECK(nvs_flash_init());
     status = LOCAL_MODE;
-    char sim_number[20] = {0};
     xTaskCreate(&led_task, "led_status_task", 2048, NULL, 5, NULL);
     xTaskCreate(&button_task, "button_task", 2048, NULL, 10, NULL);
+    xTaskCreate(&lcd_task, "lcd_task", 2048, NULL, 11, NULL);
     wifi_init();
     mount_SPIFFS();
-    read_from_file("number.txt", sim_number);
-    ESP_LOGI(TAG, "Sim number: %s", sim_number);
     if (smartconfig_flag == ENABLE_SC)
     {
         smartconfig_flag = DISABLE_SC;

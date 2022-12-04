@@ -45,8 +45,16 @@ extern uint8_t topic_room_4_sensor[100];
 extern _status status;
 extern bool send_sms_alarm_flag;
 char alarm_status[5] = {0};
+extern char room_alarm[50];
 bool press_button = false;
-
+extern bool node_1_alarm_flag;
+extern bool node_2_alarm_flag;
+extern bool node_3_alarm_flag;
+extern bool node_4_alarm_flag;
+bool node_1_sms_done = false;
+bool node_2_sms_done = false;
+bool node_3_sms_done = false;
+bool node_4_sms_done = false;
 typedef enum
 {
     NODE_1 = 1,
@@ -404,16 +412,17 @@ void lora_task(void *param)
     lora_init();
     lora_set_frequency(433E6);
     lora_enable_crc();
-    read_from_file("alarm_status.txt", alarm_status); 
-    if(strlen(alarm_status) == 0)
-    {
-        strcpy(alarm_status, "off");
-        write_to_file("alarm_status.txt", alarm_status);
-    }
-    else
-    {
-        ESP_LOGI(TAG, "Read from alarm_status.txt: %s", alarm_status);
-    }
+    // read_from_file("alarm_status.txt", alarm_status); 
+    // if(strlen(alarm_status) == 0)
+    // {
+    //     strcpy(alarm_status, "off");
+    //     write_to_file("alarm_status.txt", alarm_status);
+    // }
+    // else
+    // {
+    //     ESP_LOGI(TAG, "Read from alarm_status.txt: %s", alarm_status);
+    // }
+    strcpy(alarm_status, "off");
     while (1)
     {
         switch (node_id)
@@ -421,12 +430,12 @@ void lora_task(void *param)
         case NODE_1:
             sprintf(request_mess, "$,node_1,request,%s,*\r\n", alarm_status);
             tick_9 = xTaskGetTickCount();
-            while ((xTaskGetTickCount() - tick_9 < 9000 / portTICK_RATE_MS) && (recv_flag == false))
+            while ((xTaskGetTickCount() - tick_9 < 5000 / portTICK_RATE_MS) && (recv_flag == false))
             {
                 tick_3 = xTaskGetTickCount();
                 lora_send_packet((uint8_t *)request_mess, strlen(request_mess));
                 ESP_LOGI(TAG, "Send request %s", request_mess);
-                while ((xTaskGetTickCount() - tick_3 < 2000 / portTICK_RATE_MS))
+                while ((xTaskGetTickCount() - tick_3 < 1000 / portTICK_RATE_MS))
                 {
                     lora_receive();
                     if (lora_received())
@@ -469,12 +478,12 @@ void lora_task(void *param)
         case NODE_2:
             sprintf(request_mess, "$,node_2,request,%s,*\r\n", alarm_status);
             tick_9 = xTaskGetTickCount();
-            while ((xTaskGetTickCount() - tick_9 < 9000 / portTICK_RATE_MS) && (recv_flag == false))
+            while ((xTaskGetTickCount() - tick_9 < 5000 / portTICK_RATE_MS) && (recv_flag == false))
             {
                 tick_3 = xTaskGetTickCount();
                 lora_send_packet((uint8_t *)request_mess, strlen(request_mess));
                 ESP_LOGI(TAG, "Send request %s", request_mess);
-                while ((xTaskGetTickCount() - tick_3 < 2000 / portTICK_RATE_MS))
+                while ((xTaskGetTickCount() - tick_3 < 1000 / portTICK_RATE_MS))
                 {
                     lora_receive();
                     if (lora_received())
@@ -517,12 +526,12 @@ void lora_task(void *param)
         case NODE_3:
             sprintf(request_mess, "$,node_3,request,%s,*\r\n", alarm_status);
             tick_9 = xTaskGetTickCount();
-            while ((xTaskGetTickCount() - tick_9 < 9000 / portTICK_RATE_MS) && (recv_flag == false))
+            while ((xTaskGetTickCount() - tick_9 < 5000 / portTICK_RATE_MS) && (recv_flag == false))
             {
                 tick_3 = xTaskGetTickCount();
                 lora_send_packet((uint8_t *)request_mess, strlen(request_mess));
                 ESP_LOGI(TAG, "Send request %s", request_mess);
-                while ((xTaskGetTickCount() - tick_3 < 2000 / portTICK_RATE_MS))
+                while ((xTaskGetTickCount() - tick_3 < 1000 / portTICK_RATE_MS))
                 {
                     lora_receive();
                     if (lora_received())
@@ -565,12 +574,12 @@ void lora_task(void *param)
         case NODE_4:
             sprintf(request_mess, "$,node_4,request,%s,*\r\n", alarm_status);
             tick_9 = xTaskGetTickCount();
-            while ((xTaskGetTickCount() - tick_9 < 9000 / portTICK_RATE_MS) && (recv_flag == false))
+            while ((xTaskGetTickCount() - tick_9 < 5000 / portTICK_RATE_MS) && (recv_flag == false))
             {
                 tick_3 = xTaskGetTickCount();
                 lora_send_packet((uint8_t *)request_mess, strlen(request_mess));
                 ESP_LOGI(TAG, "Send request %s", request_mess);
-                while ((xTaskGetTickCount() - tick_3 < 2000 / portTICK_RATE_MS))
+                while ((xTaskGetTickCount() - tick_3 < 1000 / portTICK_RATE_MS))
                 {
                     lora_receive();
                     if (lora_received())
@@ -650,8 +659,32 @@ void lora_task(void *param)
             else
             {
                 alarm_flag = ENABLE_ALARM;
+                if(strstr(mess_node_1.mq7_status, "on") != NULL && node_1_alarm_flag == false)
+                {
+                    ESP_LOGI(TAG, "Node 1 alarm");
+                    node_1_alarm_flag = true;
+                    strcpy(room_alarm, ". Chay o phong khach");
+                }
+                else if(strstr(mess_node_2.mq7_status, "on") != NULL && node_2_alarm_flag == false)
+                {
+                    ESP_LOGI(TAG, "Node 2 alarm");
+                    node_2_alarm_flag = true;
+                    strcpy(room_alarm, ". Chay o phong ngu");
+                }
+                else if(strstr(mess_node_3.mq7_status, "on") != NULL && node_3_alarm_flag == false)
+                {
+                    ESP_LOGI(TAG, "Node 3 alarm");
+                    node_3_alarm_flag = true;
+                    strcpy(room_alarm, ". Chay o phong ve sinh");
+                }
+                else if(strstr(mess_node_4.mq7_status, "on") != NULL && node_4_alarm_flag == false)
+                {
+                    ESP_LOGI(TAG, "Node 4 alarm");
+                    node_4_alarm_flag = true;
+                    strcpy(room_alarm, ". Chay o phong ");
+                }
                 strcpy(alarm_status, "on");
-                write_to_file("alarm_status.txt", alarm_status);
+                // write_to_file("alarm_status.txt", alarm_status);
             }
         }
         else

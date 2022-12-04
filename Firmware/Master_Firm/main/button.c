@@ -37,7 +37,16 @@ extern char alarm_status[5];
 extern bool send_sms_alarm_flag;
 extern RTC_NOINIT_ATTR int alarm_flag;
 extern bool press_button;
-
+extern bool send_sms;
+char room_alarm[50] = {0};
+bool node_1_alarm_flag = false;
+bool node_2_alarm_flag = false;
+bool node_3_alarm_flag = false;
+bool node_4_alarm_flag = false;
+extern bool node_1_sms_done;
+extern bool node_2_sms_done;
+extern bool node_3_sms_done;
+extern bool node_4_sms_done;
 typedef struct
 {
     uint64_t time_down;
@@ -109,6 +118,15 @@ void button_task(void *param)
                 press_button = true;
                 alarm_flag = DISABLE_ALARM;
                 send_sms_alarm_flag = false;
+                node_1_alarm_flag = false;
+                node_2_alarm_flag = false;
+                node_3_alarm_flag = false;
+                node_4_alarm_flag = false;
+                node_1_sms_done = false;
+                node_2_sms_done = false;
+                node_3_sms_done = false;
+                node_4_sms_done = false;
+                send_sms = false;
                 strcpy(alarm_status, "off");
                 write_to_file("alarm_status.txt", alarm_status);
                 gpio_set_level(LED_ONOFF_PIN, LED_ON);
