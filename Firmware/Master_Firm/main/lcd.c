@@ -74,8 +74,6 @@ void lcd_clear(i2c_port_t i2c_num)
 
 void lcd_init(i2c_port_t i2c_num)
 {
-    i2c_init();
-    vTaskDelay(1000 / portTICK_RATE_MS);
     vTaskDelay(50 / portTICK_PERIOD_MS);
     lcd_send_cmd(0x30);
     vTaskDelay(10 / portTICK_PERIOD_MS);
@@ -107,10 +105,13 @@ void lcd_send_string(char *str)
 
 void lcd_task(void *param)
 {
+    i2c_init();
+    vTaskDelay(500 / portTICK_RATE_MS);
     lcd_init();
     lcd_clear();
     while (1)
     {
+        lcd_clear();
         // Line 1
         lcd_send_cmd(0x80 | 0x00);
         lcd_send_string()
@@ -124,6 +125,6 @@ void lcd_task(void *param)
         lcd_send_cmd(0x80 | 0x54);
         lcd_send_string()
 
-        vTaskDelay(500 / portTICK_RATE_MS);
+        vTaskDelay(200 / portTICK_RATE_MS);
     }
 }
