@@ -57,6 +57,8 @@ uint8_t topic_process[100] = {0};
 uint8_t topic_number[100] = {0};
 uint8_t topic_message[100] = {0};
 
+
+
 void app_main(void)
 {
     ESP_ERROR_CHECK(nvs_flash_init());

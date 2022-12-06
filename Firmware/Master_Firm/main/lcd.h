@@ -12,13 +12,13 @@
 
 #define LCD_ADDRESS                 0x27
 
-void lcd_init(void);
+
+void lcd_init(i2c_port_t i2c_num);
 void lcd_send_string(char *str);
-void lcd_clear(void);
+void lcd_clear(i2c_port_t i2c_num);
 void lcd_send_data(char data);
 void lcd_send_cmd(char cmd);
 void lcd_task(void *param);
-#endif
-
 
 #endif
+

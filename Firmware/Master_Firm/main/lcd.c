@@ -21,8 +21,8 @@ void i2c_init(void)
         .sda_pullup_en = GPIO_PULLUP_ENABLE,
         .scl_pullup_en = GPIO_PULLUP_ENABLE,
         .master.clk_speed = I2C_CLOCK_FREQ};
-    i2c_param_config(&i2c_config);
-    i2c_driver_install(i2c_config.mode, 0, 0, 0);
+    i2c_param_config(i2c_num, &i2c_config);
+    i2c_driver_install(i2c_num, i2c_config.mode, 0, 0, 0);
 }
 
 esp_err_t i2c_write_lcd(uint8_t *data, int len)
@@ -32,7 +32,7 @@ esp_err_t i2c_write_lcd(uint8_t *data, int len)
     i2c_master_write_byte(cmd, (LCD_ADDRESS << 1) | I2C_MASTER_WRITE, ACK_CHECK_EN);
     i2c_master_write(cmd, data, len, ACK_CHECK_EN);
     i2c_master_stop(cmd);
-    esp_err_t ret = i2c_master_cmd_begin(cmd, 1000 / portTICK_PERIOD_MS);
+    esp_err_t ret = i2c_master_cmd_begin(i2c_num, cmd, 1000 / portTICK_PERIOD_MS);
     i2c_cmd_link_delete(cmd);
     return ret;
 }
@@ -107,24 +107,24 @@ void lcd_task(void *param)
 {
     i2c_init();
     vTaskDelay(500 / portTICK_RATE_MS);
-    lcd_init();
-    lcd_clear();
+    lcd_init(0);
+    lcd_clear(0);
     while (1)
     {
-        lcd_clear();
+        // lcd_clear(0);
         // Line 1
         lcd_send_cmd(0x80 | 0x00);
-        lcd_send_string()
+        lcd_send_string("Hello!!");
         // Line 2
         lcd_send_cmd(0x80 | 0x40);
-        lcd_send_string()
+        lcd_send_string("This is");
         // Line 3
         lcd_send_cmd(0x80 | 0x14);
-        lcd_send_string()
+        lcd_send_string("Burning Alarm");
         // Line 4
         lcd_send_cmd(0x80 | 0x54);
-        lcd_send_string()
+        lcd_send_string("Project - MASTER");
 
-        vTaskDelay(200 / portTICK_RATE_MS);
+        vTaskDelay(2000 / portTICK_RATE_MS);
     }
 }
